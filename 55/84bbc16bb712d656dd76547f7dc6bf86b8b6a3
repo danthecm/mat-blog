@@ -1,0 +1,33 @@
+frontend/.next/server/app-paths-manifest.json
+  s_629a0d601c3887::t_141c65b6831531 3
+README.md
+  s_629a0d601c3887::t_af164610af31b5 1-20
+backend/README.md
+  s_629a0d601c3887::t_f73126c2db9ee7 1-40
+frontend/.next/server/app/author/[username]/page.js
+  s_629a0d601c3887::t_141c65b6831531 1-244,249-250,252-292,294-336,338-358,360-493,495-504,506-613,615-617
+frontend/.next/types/app/author/[username]/page.ts
+  s_629a0d601c3887::t_141c65b6831531 1-79
+frontend/.next/app-build-manifest.json
+  s_629a0d601c3887::t_141c65b6831531 28-44,46-47
+frontend/README.md
+  s_629a0d601c3887::t_141c65b6831531 1-32
+frontend/.next/static/chunks/app/author/[username]/page.js
+  s_629a0d601c3887::t_141c65b6831531 1-300,302-884
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "5584bbc16bb712d656dd76547f7dc6bf86b8b6a3",
+  "prompts": {},
+  "sessions": {
+    "s_629a0d601c3887": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "572c4b76-e47b-4346-835a-de280882acbb",
+        "model": "unknown"
+      },
+      "human_author": "Daniel Etchie <etchiedaniel1@gmail.com>"
+    }
+  }
+}
