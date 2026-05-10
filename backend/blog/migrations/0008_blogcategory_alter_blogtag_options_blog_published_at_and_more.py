@@ -68,7 +68,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='blogtag',
             name='slug',
-            field=models.SlugField(blank=True, null=True),
+            field=models.SlugField(blank=True, null=True, db_index=False),
         ),
         migrations.AlterField(
             model_name='blog',

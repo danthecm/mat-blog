@@ -5,16 +5,17 @@ Django settings for react_blog_api project.
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+import dj_database_url
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+t=%2q!u_f&4ev-u8dp!rviha3x_0)i+z+a^%-5c8*jb6wbbd*'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-+t=%2q!u_f&4ev-u8dp!rviha3x_0)i+z+a^%-5c8*jb6wbbd*')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ["*"]
 
@@ -75,12 +76,41 @@ WSGI_APPLICATION = 'react_blog_api.wsgi.application'
 
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Resilient configuration for Vercel/Production
+# 1. Try DATABASE_URL (standard for Vercel/Postgres)
+# 2. Try individual DB_* env vars (Supabase credentials)
+# 3. Fallback to SQLite (Local Development)
+
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True,
+        )
     }
-}
+elif config('DB_HOST', default=None):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_DATABASE'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST'),
+            'PORT': config('DB_PORT', default='5432'),
+            'OPTIONS': {'sslmode': 'require'},
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -100,7 +130,7 @@ USE_TZ = True
 
 
 # Static & Media files
-STATIC_URL = 'static/'
+STATIC_URL = config('STATIC_URL', default='static/')
 STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
