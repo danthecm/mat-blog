@@ -1,0 +1,62 @@
+backend/tests/__init__.py
+  h_a99f6724ba283e 72,85-86
+  s_9f4aef94fc56bd::t_ac0cf0b65c5e40 1-2,8-47,49,54-56,73,82,97
+backend/newsroom/views.py
+  s_9f4aef94fc56bd::t_db7b3967c13703 14-15,17,49-52,63,98,132,194
+backend/blog/tests.py
+  s_9f4aef94fc56bd::t_786d4b407e3980 276,278
+  s_9f4aef94fc56bd::t_51897d6bdbecba 248,250,252-253
+backend/react_blog_api/settings.py
+  s_9f4aef94fc56bd::t_ac0cf0b65c5e40 103-106,110
+  s_9f4aef94fc56bd::t_c7a2c174af53e3 23,25,32-34,43-59,62-66,98,114,135,144,151,160-161,171-172
+  h_a99f6724ba283e 100,108-109,111,113
+backend/blog/serializer.py
+  s_9f4aef94fc56bd::t_c4854d761a9bc3 9-10,13
+frontend/src/components/pages/Editor/RichTextEditor.js
+  s_9f4aef94fc56bd::t_f3d2aa2673e2e8 5,7
+backend/blog/views.py
+  s_9f4aef94fc56bd::t_db7b3967c13703 26-27,96,100,122-141,315
+  s_9f4aef94fc56bd::t_c4854d761a9bc3 305-306,310-314
+backend/user/models.py
+  h_a99f6724ba283e 24-38
+backend/blog/permissions.py
+  s_9f4aef94fc56bd::t_db7b3967c13703 12-16,78-79
+  h_a99f6724ba283e 33,44,49,61
+  s_9f4aef94fc56bd::t_786d4b407e3980 48,50,52-53,56-60,62
+frontend/package.json
+  s_a43722b15356b0::t_3714a1fa39a798 8-10,13,22
+  s_9f4aef94fc56bd::t_f3d2aa2673e2e8 12
+frontend/src/components/pages/Editor/ComposePost.js
+  s_9f4aef94fc56bd::t_3f4e1529eb067b 4,7-58,73-74,82-101,105-106,111-112,123,160,162-165,167-171,173,188-190,221,389,405-425
+frontend/src/components/pages/Home/Home.js
+  s_9f4aef94fc56bd::t_c4854d761a9bc3 9,19,24,52-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "4467fb016f2fa89e25a97c4bbc9b9ba34e008288",
+  "prompts": {},
+  "humans": {
+    "h_a99f6724ba283e": {
+      "author": "Daniel Etchie <etchiedaniel1@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_9f4aef94fc56bd": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f97bec2e-414a-4f47-b7ba-e28113f9ae38",
+        "model": "unknown"
+      },
+      "human_author": "Daniel Etchie <etchiedaniel1@gmail.com>"
+    },
+    "s_a43722b15356b0": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2f3c3393-e669-4b16-94c3-4d010b92ce67",
+        "model": "unknown"
+      },
+      "human_author": "Daniel Etchie <etchiedaniel1@gmail.com>"
+    }
+  }
+}
