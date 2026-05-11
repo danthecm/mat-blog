@@ -76,8 +76,15 @@ const TopPostsTable = ({ posts, isAdmin }) => {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const DashboardHome = () => {
-  const { state: { user, role } } = useContext(store);
-  const isAdmin = role === 'admin';
+  const { state: { user, role, groups } } = useContext(store);
+
+  // Groups are the primary source of truth; role is kept for display
+  const inGroup = (...names) => {
+    if (Array.isArray(groups) && groups.length > 0) return names.some(n => groups.includes(n));
+    return role ? names.includes(role) : false;
+  };
+  const isAdmin  = inGroup('admin');
+  const isEditor = inGroup('editor', 'admin');
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -262,7 +269,7 @@ const DashboardHome = () => {
             </div>
           </Link>
 
-          {(role === 'admin' || role === 'editor') && (
+          {isEditor && (
             <Link href="/dashboard/inbox" className="flex items-center gap-3 p-4 rounded-lg border-2 border-dashed border-gray-200 hover:border-yellow-400 hover:bg-yellow-50 transition-all group">
               <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center group-hover:bg-yellow-400 group-hover:text-white transition-all text-yellow-600 font-bold text-lg">
                 <i className="fa-solid fa-inbox text-sm"></i>

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import UserProfile
+from blog.roles import get_primary_role
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -12,10 +13,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
+    # Array of group names, e.g. ["editor"] — primary source of truth for the frontend
+    groups = serializers.SlugRelatedField(
+        many=True, slug_field='name', read_only=True
+    )
+    # Convenience computed string — highest-privilege role name
+    role = serializers.SerializerMethodField()
+
+    def get_role(self, obj):
+        return get_primary_role(obj)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'date_joined', 'profile')
+        fields = ('id', 'username', 'email', 'date_joined', 'profile', 'groups', 'role')
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -28,6 +38,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'password', 'bio', 'website')
 
     def create(self, validated_data):
+        from django.contrib.auth.models import Group
         bio = validated_data.pop('bio', '')
         website = validated_data.pop('website', '')
         password = validated_data.pop('password')
@@ -35,6 +46,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         UserProfile.objects.create(user=user, bio=bio, website=website)
+        # All new users start as contributors — assign Group so permission checks work
+        contributor_group, _ = Group.objects.get_or_create(name='contributor')
+        user.groups.add(contributor_group)
         return user
 
 

@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,6 +11,7 @@ from .models import UserProfile
 from .serializer import (
     UserSerializer, RegisterSerializer, UpdateProfileSerializer, UserProfileSerializer
 )
+from blog.roles import is_admin, is_editor
 
 
 @extend_schema(tags=['auth'])
@@ -86,12 +87,7 @@ class UpdateUserRoleView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, username):
-        try:
-            requester_profile = request.user.profile
-        except UserProfile.DoesNotExist:
-            return Response({'error': 'No profile found.'}, status=status.HTTP_403_FORBIDDEN)
-
-        if requester_profile.role != 'admin':
+        if not is_admin(request.user):
             return Response({'error': 'Only admins can change user roles.'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
@@ -106,6 +102,12 @@ class UpdateUserRoleView(APIView):
         profile, _ = UserProfile.objects.get_or_create(user=target_user)
         profile.role = new_role
         profile.save()
+
+        # Sync Group membership — single source of truth for permission checks
+        target_user.groups.clear()
+        group, _ = Group.objects.get_or_create(name=new_role)
+        target_user.groups.add(group)
+
         return Response({'message': f'{username} is now a {new_role}.'})
 
 
@@ -123,12 +125,7 @@ class ApproveContributorView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, username):
-        try:
-            requester_profile = request.user.profile
-        except UserProfile.DoesNotExist:
-            return Response({'error': 'No profile found.'}, status=status.HTTP_403_FORBIDDEN)
-
-        if requester_profile.role not in ('editor', 'admin'):
+        if not is_editor(request.user):
             return Response({'error': 'Only editors and admins can approve contributors.'}, status=status.HTTP_403_FORBIDDEN)
 
         try:

@@ -11,6 +11,7 @@ Django==6.0.4
 django-cloudinary-storage==0.3.0
 django-cors-headers==4.9.0
 django-filter==25.2
+django-guardian==3.3.1
 psycopg2-binary==2.9.10
 django-tinymce==5.0.0
 djangorestframework==3.17.1

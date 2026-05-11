@@ -6,9 +6,11 @@ from user.serializer import UserSerializer
 
 
 class BlogCategorySerializer(serializers.ModelSerializer):
+    blog_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = BlogCategory
-        fields = ('id', 'name', 'slug', 'description')
+        fields = ('id', 'name', 'slug', 'description', 'blog_count')
 
 
 class BlogTagSerializer(serializers.ModelSerializer):

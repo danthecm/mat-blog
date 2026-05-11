@@ -3,6 +3,7 @@ export const authState = {
   accessToken: null,
   isAuthenticated: false,
   role: null,
+  groups: [],   // Array of group names from the API, e.g. ["editor"]
 };
 
 export const authReducer = (state = authState, action) => {
@@ -14,6 +15,7 @@ export const authReducer = (state = authState, action) => {
         accessToken: action.payload.accessToken,
         isAuthenticated: true,
         role: action.payload.role,
+        groups: action.payload.groups || [],
       };
     case 'LOGOUT':
       return {
@@ -22,12 +24,14 @@ export const authReducer = (state = authState, action) => {
         accessToken: null,
         isAuthenticated: false,
         role: null,
+        groups: [],
       };
     case 'SET_USER':
       return {
         ...state,
         user: action.payload.user,
         role: action.payload.role,
+        groups: action.payload.groups || [],
         isAuthenticated: true,
       };
     default:

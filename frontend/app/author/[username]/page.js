@@ -2,7 +2,7 @@ import AuthorProfile from '@/src/components/pages/AuthorProfile/AuthorProfile';
 import axios from 'axios';
 
 export async function generateMetadata({ params }) {
-  const { username } = params;
+  const { username } = await params;
   try {
     const res = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}users/${username}/`);
     const profile = res.data;
@@ -38,6 +38,7 @@ export async function generateMetadata({ params }) {
   }
 }
 
-export default function Page({ params }) {
-  return <AuthorProfile username={params.username} />;
+export default async function Page({ params }) {
+  const { username } = await params;
+  return <AuthorProfile username={username} />;
 }

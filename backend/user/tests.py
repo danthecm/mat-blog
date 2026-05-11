@@ -230,3 +230,43 @@ class ContributorApprovalTests(APITestCase):
             'content': 'Should not work',
         }, format='json')
         self.assertEqual(r.status_code, 403)
+
+
+# ─── Serializer — groups & role fields ────────────────────────────────────────
+
+class UserSerializerGroupsTests(APITestCase):
+    """
+    Phase 4 tests: verifies the /users/me/ endpoint returns both the
+    `groups` array and the top-level computed `role` string.
+    """
+
+    def test_me_returns_groups_array(self):
+        user = create_user('grp_check', role='editor')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(user)}')
+        r = self.client.get('/users/me/')
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('groups', r.data)
+        self.assertIn('editor', r.data['groups'])
+
+    def test_me_returns_computed_role_string(self):
+        user = create_user('role_check', role='admin')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(user)}')
+        r = self.client.get('/users/me/')
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('role', r.data)
+        self.assertEqual(r.data['role'], 'admin')
+
+    def test_role_promotion_syncs_group_membership(self):
+        """When an admin changes a user's role, their Group should update too."""
+        from django.contrib.auth.models import Group
+        admin = create_user('promo_admin', role='admin')
+        target = create_user('promo_target', role='contributor')
+
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(admin)}')
+        r = self.client.patch(f'/users/{target.username}/role/', {'role': 'editor'}, format='json')
+        self.assertEqual(r.status_code, 200)
+
+        target.refresh_from_db()
+        group_names = list(target.groups.values_list('name', flat=True))
+        self.assertIn('editor', group_names)
+        self.assertNotIn('contributor', group_names)

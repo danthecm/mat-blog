@@ -1,37 +1,36 @@
+"""
+DRF Permission classes for the blog platform.
+
+All role checks use `blog.roles` helpers — do NOT use `profile.role` directly.
+This ensures adding/renaming roles only requires changing `roles.py`.
+"""
 from rest_framework.permissions import BasePermission, SAFE_METHODS
-from user.models import UserProfile
 from .models import BlogStatus
+from .roles import is_admin, is_editor, is_contributor
 
 
-class IsEditorOrAdmin(BasePermission):
-    """Allow only users with editor or admin role."""
+class IsEditorOrHigher(BasePermission):
+    """
+    Allow any user with 'editor' or 'admin' privileges.
+    Role inheritance is handled by the `is_editor` helper.
+    """
 
     def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
-        try:
-            return request.user.profile.role in ('editor', 'admin')
-        except UserProfile.DoesNotExist:
-            return False
+        return request.user.is_authenticated and is_editor(request.user)
 
 
 class IsAdminRole(BasePermission):
-    """Allow only admin-role users."""
+    """Allow only users in the 'admin' group."""
 
     def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
-        try:
-            return request.user.profile.role == 'admin'
-        except UserProfile.DoesNotExist:
-            return False
+        return request.user.is_authenticated and is_admin(request.user)
 
 
 class IsAuthorOrEditorOrReadOnly(BasePermission):
     """
-    - Read: anyone
-    - Create: authenticated (contributor+)
-    - Update/Delete: author themselves, or editor/admin
+    - Read (GET/HEAD/OPTIONS): anyone
+    - Create: any authenticated user
+    - Update/Delete: determined by Django permissions ('change_blog', 'delete_blog')
     """
 
     def has_permission(self, request, view):
@@ -42,49 +41,25 @@ class IsAuthorOrEditorOrReadOnly(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
+
         if not request.user.is_authenticated:
             return False
 
-        # 1. Admin can do EVERYTHING
-        try:
-            if request.user.profile.role == 'admin':
+        # 1. Global permissions (Editor/Admin)
+        if request.method == 'DELETE':
+            if request.user.has_perm('blog.delete_blog'):
                 return True
-        except UserProfile.DoesNotExist:
-            pass
-
-        # 2. Edit Lock: Authors/Editors cannot edit pending submissions.
-        # They must 'recall' them to drafts first (authors) or just use the Inbox (editors).
-        if obj.status == BlogStatus.PENDING and request.method not in SAFE_METHODS:
-            try:
-                # Only editors can modify a post while it's in review (Admins already handled above)
-                if request.user.profile.role == 'editor':
-                    return True
-                return False
-            except UserProfile.DoesNotExist:
-                return False
-
-        # 3. Author permissions:
-        if obj.author == request.user:
-            if request.method in SAFE_METHODS:
+        else:
+            if request.user.has_perm('blog.change_blog'):
                 return True
-            
-            # Authors can delete their own DRAFTS
-            if request.method == 'DELETE':
-                return obj.status == BlogStatus.DRAFT
-            
-            # Authors can edit DRAFTS or PUBLISHED posts
-            # But they CANNOT edit PENDING (must recall first)
-            return obj.status in (BlogStatus.DRAFT, BlogStatus.PUBLISHED)
+
+        # 2. Object-level permissions (Author)
+        # Authors can ONLY edit or delete their own posts if they are still in DRAFT status.
+        # Once submitted (PENDING) or PUBLISHED, they lose these rights.
+        if request.method == 'DELETE':
+            return request.user.has_perm('blog.delete_blog', obj) and obj.status == BlogStatus.DRAFT
         
-        # 4. Editor permissions:
-        try:
-            # Editors can update (but not delete) any post
-            if request.user.profile.role == 'editor' and request.method != 'DELETE':
-                return True
-        except UserProfile.DoesNotExist:
-            pass
-
-        return False
+        return request.user.has_perm('blog.change_blog', obj) and obj.status == BlogStatus.DRAFT
 
 
 class IsApprovedContributor(BasePermission):
@@ -95,11 +70,11 @@ class IsApprovedContributor(BasePermission):
             return True
         if not request.user or not request.user.is_authenticated:
             return False
-        
         # Admins are always approved
+        if is_admin(request.user):
+            return True
         try:
-            if request.user.profile.role == 'admin':
-                return True
             return request.user.profile.is_approved
-        except UserProfile.DoesNotExist:
+        except (AttributeError, Exception):
+            # Fallback for users without profiles or DB issues
             return False

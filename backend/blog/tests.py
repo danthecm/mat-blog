@@ -245,11 +245,12 @@ class BlogUpdateDeleteTests(APITestCase):
         self.blog = create_blog(self.author, title='Editable Blog', status=BlogStatus.PUBLISHED)
 
     def test_author_can_update_own_blog(self):
+        draft = create_blog(self.author, title='My Draft', status=BlogStatus.DRAFT)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.author)}')
-        r = self.client.patch(f'/blogs/{self.blog.slug}/', {'title': 'Updated Title'}, format='json')
+        r = self.client.patch(f'/blogs/{draft.slug}/', {'title': 'Updated Title'}, format='json')
         self.assertEqual(r.status_code, 200)
-        self.blog.refresh_from_db()
-        self.assertEqual(self.blog.title, 'Updated Title')
+        draft.refresh_from_db()
+        self.assertEqual(draft.title, 'Updated Title')
 
     def test_editor_can_update_any_blog(self):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
@@ -272,8 +273,9 @@ class BlogUpdateDeleteTests(APITestCase):
 
     def test_author_cannot_delete_own_published_post(self):
         # Only Admins can delete published posts (according to strict admin requirement)
+        published = create_blog(self.author, title='Published', status=BlogStatus.PUBLISHED)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.author)}')
-        r = self.client.delete(f'/blogs/{self.blog.slug}/')
+        r = self.client.delete(f'/blogs/{published.slug}/')
         self.assertEqual(r.status_code, 403)
 
     def test_other_contributor_cannot_delete_blog(self):
@@ -505,3 +507,65 @@ class OGImageTests(APITestCase):
     def test_og_image_nonexistent_slug_returns_404(self):
         r = self.client.get('/blogs/no-such-blog/og-image/')
         self.assertEqual(r.status_code, 404)
+
+
+# ─── Guardian Object Permission Lifecycle ─────────────────────────────────────
+
+class GuardianPermissionLifecycleTests(APITestCase):
+    """
+    Tests that Guardian object permissions are correctly assigned and revoked
+    throughout the blog post lifecycle:
+      create  → author gets change_blog + delete_blog
+      submit  → change_blog revoked from author
+      recall  → change_blog restored to author
+    (reject → change_blog restored is tested in newsroom tests)
+    """
+
+    def setUp(self):
+        self.author = create_user('gpl_author')
+        self.editor = create_user('gpl_editor', role='editor')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.author)}')
+
+    def test_create_assigns_change_and_delete_perms_to_author(self):
+        from guardian.shortcuts import get_perms
+        r = self.client.post('/blogs/', {
+            'title': 'Guardian Test Post',
+            'content': '<p>' + 'word ' * 300 + '</p>',
+        }, format='json')
+        self.assertEqual(r.status_code, 201)
+        blog = Blog.objects.get(slug=r.data['slug'])
+        perms = get_perms(self.author, blog)
+        self.assertIn('change_blog', perms)
+        self.assertIn('delete_blog', perms)
+
+    def test_submit_removes_change_perm_from_author(self):
+        from unittest.mock import patch
+        from guardian.shortcuts import get_perms
+        blog = create_blog(self.author, title='Submit Perm Test', status=BlogStatus.DRAFT)
+        # Manually assign perms (as perform_create would do)
+        from guardian.shortcuts import assign_perm
+        assign_perm('blog.change_blog', self.author, blog)
+
+        with patch('newsroom.views.send_mail'):
+            r = self.client.post(f'/newsroom/blogs/{blog.slug}/submit/')
+        self.assertEqual(r.status_code, 201)
+
+        perms = get_perms(self.author, blog)
+        self.assertNotIn('change_blog', perms, 'Author should NOT have change_blog after submit')
+
+    def test_recall_restores_change_perm_to_author(self):
+        from unittest.mock import patch
+        from guardian.shortcuts import get_perms, assign_perm
+        blog = create_blog(self.author, title='Recall Perm Test', status=BlogStatus.DRAFT)
+        assign_perm('blog.change_blog', self.author, blog)
+
+        # Submit (removes change_blog)
+        with patch('newsroom.views.send_mail'):
+            self.client.post(f'/newsroom/blogs/{blog.slug}/submit/')
+
+        # Recall (restores change_blog)
+        r = self.client.post(f'/newsroom/blogs/{blog.slug}/recall/')
+        self.assertEqual(r.status_code, 200)
+
+        perms = get_perms(self.author, blog)
+        self.assertIn('change_blog', perms, 'Author SHOULD have change_blog after recall')

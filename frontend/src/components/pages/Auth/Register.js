@@ -29,7 +29,7 @@ const Register = () => {
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
       
-      // 3. Fetch user profile for role
+      // 3. Fetch user profile — now includes groups array and computed role
       const userRes = await api.get('users/me/');
       
       dispatch({
@@ -37,7 +37,8 @@ const Register = () => {
         payload: {
           user: userRes.data.username,
           accessToken: access,
-          role: userRes.data.profile?.role
+          role: userRes.data.role,             // computed top-level role string
+          groups: userRes.data.groups || [],   // primary source of truth for permissions
         }
       });
       

@@ -2,7 +2,7 @@ import SingleBlog from '@/src/components/pages/SingleBlog/SingleBlog';
 import axios from 'axios';
 
 export async function generateMetadata({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
   try {
     const res = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}blogs/${slug}/`);
     const blog = res.data;

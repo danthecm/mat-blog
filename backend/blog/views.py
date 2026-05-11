@@ -23,7 +23,8 @@ from .serializer import (
     BlogSerializer, BlogListSerializer, BlogCategorySerializer,
     BlogTagSerializer, BlogCommentSerializer,
 )
-from .permissions import IsEditorOrAdmin, IsAuthorOrEditorOrReadOnly, IsApprovedContributor, IsAdminRole
+from .permissions import IsEditorOrHigher, IsAuthorOrEditorOrReadOnly, IsApprovedContributor, IsAdminRole
+from .roles import is_admin, is_editor
 
 
 def get_client_ip(request):
@@ -92,16 +93,11 @@ class BlogViewSet(ModelViewSet):
         user = self.request.user
 
         if user.is_authenticated:
-            try:
-                role = user.profile.role
-            except Exception:
-                role = 'contributor'
-
-            if role == 'admin':
+            if is_admin(user):
                 # Admins see everything (scoping done per-action)
                 return qs
 
-            if role == 'editor':
+            if is_editor(user):
                 # Editors see all published, all pending, and their own drafts
                 return qs.filter(
                     Q(status=BlogStatus.PUBLISHED) |
@@ -123,7 +119,26 @@ class BlogViewSet(ModelViewSet):
         return Response({'message': 'Post moved to trash.'}, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        from guardian.shortcuts import assign_perm
+        instance = serializer.save(author=self.request.user)
+        # Grant author object-level permissions on their own post.
+        # These can be revoked individually (e.g., remove change_blog on submit).
+        assign_perm('blog.change_blog', self.request.user, instance)
+        assign_perm('blog.delete_blog', self.request.user, instance)
+
+    def perform_update(self, serializer):
+        from guardian.shortcuts import assign_perm, remove_perm
+        instance = serializer.save()
+        
+        # Defense in Depth: Revoke author's object-level permissions if NOT in draft.
+        # This ensures that even if has_object_permission is bypassed, 
+        # the author still has no underlying DB rights to the object.
+        if instance.status == BlogStatus.DRAFT:
+            assign_perm('blog.change_blog', instance.author, instance)
+            assign_perm('blog.delete_blog', instance.author, instance)
+        else:
+            remove_perm('blog.change_blog', instance.author, instance)
+            remove_perm('blog.delete_blog', instance.author, instance)
 
     def retrieve(self, request, *args, **kwargs):
         """Track view count on detail page."""
@@ -149,17 +164,10 @@ class BlogViewSet(ModelViewSet):
     def drafts(self, request):
         """GET /blogs/drafts/ - Returns drafts (global for Admins, personal for others)."""
         qs = self.get_queryset()
-        
-        try:
-            is_admin = request.user.profile.role == 'admin'
-        except Exception:
-            is_admin = False
 
-        if is_admin:
-            # Admin sees all drafts
+        if is_admin(request.user):
             qs = qs.filter(status=BlogStatus.DRAFT)
         else:
-            # Others only see their own
             qs = qs.filter(author=request.user, status=BlogStatus.DRAFT)
 
         qs = self.filter_queryset(qs)
@@ -175,12 +183,7 @@ class BlogViewSet(ModelViewSet):
         """GET /blogs/submissions/ - Returns pending submissions (global for Admins, personal for others)."""
         qs = self.get_queryset()
 
-        try:
-            is_admin = request.user.profile.role == 'admin'
-        except Exception:
-            is_admin = False
-
-        if is_admin:
+        if is_admin(request.user):
             qs = qs.filter(status=BlogStatus.PENDING)
         else:
             qs = qs.filter(author=request.user, status=BlogStatus.PENDING)
@@ -242,16 +245,11 @@ class BlogViewSet(ModelViewSet):
         from django.db.models import Sum
         from engagement.models import Comment
 
-        try:
-            role = request.user.profile.role
-        except Exception:
-            role = 'contributor'
-
         mine_only = request.query_params.get('mine', 'false').lower() == 'true'
-        is_admin = role == 'admin'
+        _is_admin = is_admin(request.user)
 
         # Base queryset: non-deleted posts
-        if is_admin and not mine_only:
+        if _is_admin and not mine_only:
             base_qs = Blog.objects.filter(is_deleted=False)
             scope_label = 'platform'
         else:
@@ -304,10 +302,17 @@ class BlogViewSet(ModelViewSet):
     destroy=extend_schema(tags=['categories'], summary='Delete a category'),
 )
 class BlogCategoryViewSet(ModelViewSet):
-    queryset = BlogCategory.objects.all()
+    queryset = BlogCategory.objects.annotate(
+        blog_count=Count('blogs', filter=Q(blogs__status='published'))
+    ).order_by('name')
     serializer_class = BlogCategorySerializer
     lookup_field = 'slug'
-    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        """Read is public; write (create/update/delete) requires editor or admin."""
+        if self.action in ('list', 'retrieve'):
+            return [AllowAny()]
+        return [IsEditorOrHigher()]
 
 
 # ─── Tags ─────────────────────────────────────────────────────────────────────
@@ -321,7 +326,7 @@ class BlogCategoryViewSet(ModelViewSet):
     destroy=extend_schema(tags=['tags'], summary='Delete a tag'),
 )
 class BlogTagViewSet(ModelViewSet):
-    queryset = BlogTag.objects.all()
+    queryset = BlogTag.objects.all().order_by('title')
     serializer_class = BlogTagSerializer
     lookup_field = 'slug'
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -349,8 +354,8 @@ class BlogCommentViewSet(ModelViewSet):
         qs = super().get_queryset()
         blog_id = self.request.query_params.get('blog_id')
         if blog_id:
-            return qs.filter(blog_id=blog_id)
-        return qs
+            return qs.filter(blog_id=blog_id).order_by('-created_at')
+        return qs.order_by('-created_at')
 
 
 # ─── Featured Blogs ───────────────────────────────────────────────────────────

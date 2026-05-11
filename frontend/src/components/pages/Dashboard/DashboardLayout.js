@@ -7,10 +7,18 @@ import { useRouter, usePathname } from 'next/navigation';
 import api from '@/src/components/utils/api';
 
 const DashboardLayout = ({ children }) => {
-  const { state: { user, role, isAuthenticated }, dispatch } = useContext(store);
+  const { state: { user, role, groups, isAuthenticated }, dispatch } = useContext(store);
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
+
+  // Helper — use groups (new) with role as fallback (backward compat)
+  const inGroup = (...names) => {
+    if (Array.isArray(groups) && groups.length > 0) return names.some(n => groups.includes(n));
+    return role ? names.includes(role) : false; // fallback if groups not yet loaded
+  };
+  const isAdmin   = inGroup('admin');
+  const isEditor  = inGroup('editor', 'admin');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -27,7 +35,8 @@ const DashboardLayout = ({ children }) => {
             type: 'SET_USER',
             payload: {
               user: userRes.data.username,
-              role: userRes.data.profile?.role
+              role: userRes.data.role,
+              groups: userRes.data.groups || [],
             }
           });
         } catch (error) {
@@ -46,15 +55,16 @@ const DashboardLayout = ({ children }) => {
   }
 
   const navLinks = [
-    { name: 'Dashboard', path: '/dashboard', roles: ['admin', 'editor', 'contributor'] },
-    { name: 'Write a Post', path: '/dashboard/compose', roles: ['admin', 'editor', 'contributor'] },
+    { name: 'Dashboard',    path: '/dashboard',         show: true },
+    { name: 'Write a Post', path: '/dashboard/compose', show: true },
     { 
-      name: role === 'admin' ? 'Content Manager' : 'My Drafts', 
+      name: isAdmin ? 'Content Manager' : 'My Drafts', 
       path: '/dashboard/drafts', 
-      roles: ['admin', 'editor', 'contributor'] 
+      show: true 
     },
-    { name: 'Editor Inbox', path: '/dashboard/inbox', roles: ['admin', 'editor'] },
-    { name: 'My Profile', path: `/author/${user}`, roles: ['admin', 'editor', 'contributor'] },
+    { name: 'Editor Inbox', path: '/dashboard/inbox',   show: isEditor },
+    { name: 'Categories',   path: '/dashboard/categories', show: isEditor },
+    { name: 'My Profile',   path: `/author/${user}`,    show: true },
   ];
 
   const handleLogout = () => {
@@ -63,8 +73,6 @@ const DashboardLayout = ({ children }) => {
     dispatch({ type: 'LOGOUT' });
     router.push('/login');
   };
-
-  const dashboardLinks = navLinks.filter(link => link.roles.includes(role));
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-main-bg">
@@ -84,7 +92,7 @@ const DashboardLayout = ({ children }) => {
         </div>
         
         <nav className="flex-1 flex flex-col gap-2">
-          {navLinks.filter(link => link.roles.includes(role)).map(link => (
+          {navLinks.filter(link => link.show).map(link => (
             <Link 
               key={link.name} 
               href={link.path}

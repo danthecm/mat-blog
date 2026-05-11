@@ -9,7 +9,7 @@ const NavBar = (props) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { state: { isAuthenticated, user, role }, dispatch } = useContext(store);
+  const { state: { isAuthenticated, user, role, groups }, dispatch } = useContext(store);
   const router = useRouter();
 
   const handleSearch = (e) => {
@@ -74,9 +74,11 @@ const NavBar = (props) => {
         >
           <i className="fa-solid fa-magnifying-glass"></i>
         </button>
-        <button aria-label="Write" className="cursor-pointer mx-[15px] border-none hover:scale-125 transition-transform duration-300">
-          <i className="fa-solid fa-pen-to-square"></i>
-        </button>
+        {(isAuthenticated && (groups.includes('editor') || groups.includes('admin') || groups.includes('contributor'))) && (
+          <Link href="/dashboard/compose" aria-label="Write" className="cursor-pointer mx-[15px] border-none hover:scale-125 transition-transform duration-300 text-inherit">
+            <i className="fa-solid fa-pen-to-square"></i>
+          </Link>
+        )}
         <div className="inline-flex">
           <button aria-label="Light mode" className="p-[5px] m-0 border-none bg-[#f1f1f1] text-primary">
             <i className="fa-regular fa-sun lumos"></i>
@@ -119,6 +121,11 @@ const NavBar = (props) => {
           <Link href="/" className="w-full px-5 py-3.5 border-b border-[#d1e7e5]">Home</Link>
           <Link href="/" className="w-full px-5 py-3.5 border-b border-[#d1e7e5]">About</Link>
           <Link href="/" className="w-full px-5 py-3.5 border-b border-[#d1e7e5]">Category</Link>
+          {(isAuthenticated && (groups.includes('editor') || groups.includes('admin') || groups.includes('contributor'))) && (
+            <Link href="/dashboard/compose" onClick={() => setMenuOpen(false)} className="w-full px-5 py-3.5 border-b border-[#d1e7e5] font-bold text-primary">
+              <i className="fa-solid fa-pen-to-square mr-2"></i> Write a Story
+            </Link>
+          )}
           <div className="flex w-full items-center px-5 py-3.5 border-b border-[#d1e7e5] gap-4">
             {isAuthenticated ? (
               <>
@@ -140,14 +147,11 @@ const NavBar = (props) => {
             >
               <i className="fa-solid fa-magnifying-glass"></i>
             </button>
-            <button aria-label="Write" className="cursor-pointer mx-[15px] border-none">
-              <i className="fa-solid fa-pen-to-square"></i>
-            </button>
             <div className="inline-flex">
-              <button aria-label="Light mode" className="p-[5px] m-0 border-none bg-[#f1f1f1] text-primary">
+              <button disabled aria-label="Light mode" className="p-[5px] m-0 border-none bg-[#f1f1f1] text-primary">
                 <i className="fa-regular fa-sun lumos"></i>
               </button>
-              <button aria-label="Dark mode" className="p-[5px] m-0 border-none bg-primary text-white">
+              <button disabled aria-label="Dark mode" className="p-[5px] m-0 border-none bg-primary text-white">
                 <i className="fa-regular fa-moon fa-flip-horizontal"></i>
               </button>
             </div>

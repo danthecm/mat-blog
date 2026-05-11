@@ -1,8 +1,61 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import CreatableSelect from 'react-select/creatable';
 import RichTextEditor from './RichTextEditor';
 import api from '@/src/components/utils/api';
+
+const selectStyles = {
+  control: (base, state) => ({
+    ...base,
+    borderColor: state.isFocused ? '#00a99d' : '#d1d5db',
+    boxShadow: state.isFocused ? '0 0 0 1px #00a99d' : 'none',
+    borderRadius: '4px',
+    minHeight: '42px',
+    fontSize: '14px',
+    '&:hover': { borderColor: '#00a99d' },
+  }),
+  multiValue: (base) => ({
+    ...base,
+    backgroundColor: '#dff1f0',
+    borderRadius: '4px',
+  }),
+  multiValueLabel: (base) => ({
+    ...base,
+    color: '#00a99d',
+    fontWeight: '600',
+    fontSize: '12px',
+  }),
+  multiValueRemove: (base) => ({
+    ...base,
+    color: '#00a99d',
+    ':hover': { backgroundColor: '#00a99d', color: 'white' },
+  }),
+  placeholder: (base) => ({ ...base, color: '#9ca3af', fontSize: '14px' }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected ? '#00a99d' : state.isFocused ? '#dff1f0' : 'white',
+    color: state.isSelected ? 'white' : '#374151',
+    fontSize: '14px',
+    cursor: 'pointer',
+  }),
+  menu: (base) => ({ ...base, zIndex: 50 }),
+};
+
+const selectStylesDisabled = {
+  ...selectStyles,
+  control: (base) => ({
+    ...selectStyles.control(base, {}),
+    backgroundColor: '#f3f4f6',
+    cursor: 'not-allowed',
+    borderColor: '#d1d5db',
+  }),
+};
+
+const createTagOnServer = async (label) => {
+  const res = await api.post('blog-tags/', { title: label });
+  return res.data.id;
+};
 import { useRouter, useSearchParams } from 'next/navigation';
 import { confirmModal, toast } from '@/src/components/utils/swal';
 
@@ -17,6 +70,8 @@ const ComposePost = () => {
   const [blogStatus, setBlogStatus] = useState('draft'); // real status from DB
   const [coverPreview, setCoverPreview] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [tagOptions, setTagOptions] = useState([]);
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,14 +79,37 @@ const ComposePost = () => {
   const saveTimeoutRef = useRef(null);
   const [autoSaveInterval, setAutoSaveInterval] = useState(30000); // default 30s
   
+  const resolveTagIds = async () => {
+    const ids = [];
+    for (const opt of selectedTags) {
+      if (opt.__isNew__) {
+        try {
+          const newId = await createTagOnServer(opt.label);
+          ids.push(newId);
+          setSelectedTags((prev) =>
+            prev.map((t) => (t === opt ? { value: newId, label: opt.label } : t))
+          );
+        } catch {
+          toast.error(`Failed to create tag "${opt.label}"`);
+        }
+      } else {
+        ids.push(opt.value);
+      }
+    }
+    return ids;
+  };
+
   // Save Draft Helper
   const saveDraft = async () => {
     try {
+      const tagIds = await resolveTagIds();
+
       const payload = {
         title,
         content,
         scheduled_for: scheduledDate || null,
-        category: category || undefined
+        category_id: category || null,
+        tag_ids: tagIds,
       };
 
       if (!slug) {
@@ -42,6 +120,7 @@ const ComposePost = () => {
         if (scheduledDate) formData.append('scheduled_for', scheduledDate);
         if (category) formData.append('category_id', category);
         if (coverFile) formData.append('cover', coverFile);
+        tagIds.forEach((id) => formData.append('tag_ids', id));
 
         const res = await api.post('blogs/', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
@@ -78,12 +157,20 @@ const ComposePost = () => {
   // Fetch categories on mount
   useEffect(() => {
     const init = async () => {
-      // 1. Fetch categories
+      // 1. Fetch categories and tags
       try {
-        const catRes = await api.get('blog-categories/');
+        const [catRes, tagRes] = await Promise.all([
+          api.get('blog-categories/'),
+          api.get('blog-tags/')
+        ]);
         setCategories(catRes.data.results || catRes.data);
+        const opts = (tagRes.data.results || tagRes.data).map((t) => ({
+          value: t.id,
+          label: t.title,
+        }));
+        setTagOptions(opts);
       } catch (err) {
-        console.error("Failed to fetch categories");
+        console.error("Failed to fetch categories / tags");
       }
 
       // 2. Fetch blog if editing
@@ -93,11 +180,14 @@ const ComposePost = () => {
           const blog = blogRes.data;
           setTitle(blog.title);
           setContent(blog.content);
-          setCategory(blog.category?.id || blog.category?.slug || '');
+          setCategory(blog.category?.id ? String(blog.category.id) : '');
           setScheduledDate(blog.published_at ? new Date(blog.published_at).toISOString().slice(0, 16) : '');
           setSlug(blog.slug);
           setBlogStatus(blog.status);
           setCoverPreview(blog.cover);
+          if (blog.tags?.length) {
+            setSelectedTags(blog.tags.map((t) => ({ value: t.id, label: t.title })));
+          }
           setStatus('Ready to edit');
         } catch (err) {
           console.error("Failed to fetch blog details");
@@ -128,7 +218,7 @@ const ComposePost = () => {
     }, autoSaveInterval);
 
     return () => clearTimeout(saveTimeoutRef.current);
-  }, [title, content, scheduledDate, category, slug, blogStatus, autoSaveInterval]);
+  }, [title, content, scheduledDate, category, selectedTags, slug, blogStatus, autoSaveInterval]);
 
   const handleSubmitForReview = async () => {
     if (!slug) {
@@ -296,7 +386,7 @@ const ComposePost = () => {
             >
               <option value="">Select a category</option>
               {categories.map((cat) => (
-                <option key={cat.id || cat.slug} value={cat.id || cat.slug}>{cat.name}</option>
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
           </div>
@@ -310,6 +400,29 @@ const ComposePost = () => {
               className={`w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-primary ${blogStatus === 'pending' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-1">
+            Tags
+            <span className="ml-2 text-xs font-normal text-gray-400">Select existing or type to create new</span>
+          </label>
+          <CreatableSelect
+            isMulti
+            isDisabled={blogStatus === 'pending'}
+            options={tagOptions}
+            value={selectedTags}
+            onChange={setSelectedTags}
+            styles={blogStatus === 'pending' ? selectStylesDisabled : selectStyles}
+            placeholder="e.g. JavaScript, Design, Tutorial..."
+            formatCreateLabel={(val) => (
+              <span>
+                <i className="fa-solid fa-plus mr-1" />
+                Create tag "{val}"
+              </span>
+            )}
+            noOptionsMessage={() => 'Type to search or create a tag'}
+          />
         </div>
 
         <div>

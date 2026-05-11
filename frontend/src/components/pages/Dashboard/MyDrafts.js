@@ -13,9 +13,14 @@ const MyDrafts = () => {
   const [published, setPublished] = useState([]);
   const [trash, setTrash] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { state: { user, role } } = useContext(store);
+  const { state: { user, role, groups } } = useContext(store);
 
-  const isAdmin = role === 'admin';
+  // Groups are the primary source of truth; role is the fallback
+  const inGroup = (...names) => {
+    if (Array.isArray(groups) && groups.length > 0) return names.some(n => groups.includes(n));
+    return role ? names.includes(role) : false;
+  };
+  const isAdmin = inGroup('admin');
 
   const fetchData = async () => {
     try {
@@ -225,6 +230,12 @@ const MyDrafts = () => {
                     <p className="text-[10px] text-gray-400 font-bold uppercase">Author: {p.author?.username}</p>
                   </div>
                   <div className="bg-white p-3 border-t border-gray-200 flex gap-2">
+                    <Link 
+                      href={`/dashboard/compose?slug=${p.slug}`}
+                      className="flex-1 text-center bg-white border border-gray-300 py-2 rounded text-sm font-bold hover:bg-gray-100 transition-colors"
+                    >
+                      Edit
+                    </Link>
                     <Link 
                       href={`/${p.slug}`}
                       target="_blank"

@@ -343,3 +343,42 @@ class FullWorkflowTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(other)}')
         r = self.client.post(f'/newsroom/blogs/{slug}/recall/')
         self.assertEqual(r.status_code, 404)
+
+
+# ─── Guardian: Reject Restores Author Permission ──────────────────────────────
+
+class GuardianRejectPermissionTests(APITestCase):
+    """
+    Verifies that when an editor rejects a submission, the author's
+    Guardian change_blog permission is restored so they can revise and resubmit.
+    """
+
+    def setUp(self):
+        self.contributor = create_user('grej_contrib')
+        self.editor = create_user('grej_editor', role='editor')
+        self.draft = create_blog(self.contributor, title='Reject Perm Post', status=BlogStatus.DRAFT)
+
+    @patch('newsroom.views.send_mail')
+    def test_reject_restores_change_perm_to_author(self, mock_mail):
+        from guardian.shortcuts import get_perms, assign_perm
+
+        # Assign the perm (simulating perform_create)
+        assign_perm('blog.change_blog', self.contributor, self.draft)
+
+        # Submit — removes change_blog
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.contributor)}')
+        self.client.post(f'/newsroom/blogs/{self.draft.slug}/submit/')
+        perms_after_submit = get_perms(self.contributor, self.draft)
+        self.assertNotIn('change_blog', perms_after_submit)
+
+        # Editor rejects — should restore change_blog
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
+        r = self.client.post(
+            f'/newsroom/blogs/{self.draft.slug}/reject/',
+            {'note': 'Needs more detail.'},
+            format='json'
+        )
+        self.assertEqual(r.status_code, 200)
+
+        perms_after_reject = get_perms(self.contributor, self.draft)
+        self.assertIn('change_blog', perms_after_reject, 'Author SHOULD have change_blog after editor rejection')

@@ -11,8 +11,10 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 
 from blog.models import Blog, BlogStatus
-from blog.permissions import IsEditorOrAdmin
+from blog.permissions import IsEditorOrHigher
+from blog.roles import is_editor
 from engagement.models import NewsletterSubscriber
+from guardian.shortcuts import assign_perm, remove_perm
 from .models import SubmissionNotification, EditorialNote
 from .serializer import SubmissionNotificationSerializer
 
@@ -44,6 +46,10 @@ class SubmitForReviewView(APIView):
         blog.status = BlogStatus.PENDING
         blog.save(update_fields=['status'])
 
+        # LOCK: revoke the author's edit rights while the post is under review.
+        # This is restored on recall (author) or reject (editor).
+        remove_perm('blog.change_blog', request.user, blog)
+
         # Create notification
         notification = SubmissionNotification.objects.create(
             blog=blog,
@@ -54,7 +60,7 @@ class SubmitForReviewView(APIView):
         # Email all editors and admins
         editor_emails = list(
             User.objects.filter(
-                profile__role__in=('editor', 'admin')
+                groups__name__in=['editor', 'admin']
             ).values_list('email', flat=True)
         )
         if editor_emails:
@@ -89,7 +95,7 @@ class EditorInboxView(ListAPIView):
     Lists all pending submission notifications for editors/admins.
     """
     serializer_class = SubmissionNotificationSerializer
-    permission_classes = [IsAuthenticated, IsEditorOrAdmin]
+    permission_classes = [IsAuthenticated, IsEditorOrHigher]
 
     def get_queryset(self):
         qs = SubmissionNotification.objects.select_related(
@@ -123,7 +129,7 @@ class PublishBlogView(APIView):
     Optionally schedules it with ?published_at=<ISO datetime>.
     Notifies newsletter subscribers if blog is marked featured.
     """
-    permission_classes = [IsAuthenticated, IsEditorOrAdmin]
+    permission_classes = [IsAuthenticated, IsEditorOrHigher]
 
     def post(self, request, slug):
         try:
@@ -185,7 +191,7 @@ class RejectBlogView(APIView):
     POST /newsroom/blogs/<slug>/reject/
     Editor sends the blog back to draft with a note.
     """
-    permission_classes = [IsAuthenticated, IsEditorOrAdmin]
+    permission_classes = [IsAuthenticated, IsEditorOrHigher]
 
     def post(self, request, slug):
         try:
@@ -196,6 +202,9 @@ class RejectBlogView(APIView):
         note_text = request.data.get('note', 'Your submission needs revision.')
         blog.status = BlogStatus.DRAFT
         blog.save(update_fields=['status'])
+
+        # UNLOCK: editor is rejecting, restore the author's ability to edit.
+        assign_perm('blog.change_blog', blog.author, blog)
 
         # Save editorial note on the submission
         notification = SubmissionNotification.objects.filter(blog=blog).order_by('-created_at').first()
@@ -243,8 +252,10 @@ class RecallSubmissionView(APIView):
         blog.status = BlogStatus.DRAFT
         blog.save(update_fields=['status'])
 
-        # Optionally, we could delete the SubmissionNotification or keep it for history.
-        # For now, let's just mark it as read/inactive if it exists.
+        # UNLOCK: author recalled their post, restore their edit rights.
+        assign_perm('blog.change_blog', request.user, blog)
+
+        # Mark the submission notification as read
         SubmissionNotification.objects.filter(blog=blog, is_read=False).update(is_read=True)
 
         return Response({'message': 'Submission recalled. You can now edit the draft.'})

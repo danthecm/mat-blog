@@ -20,28 +20,49 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = ["*"]
 
 
-# Application definition
+# ─── Apps ─────────────────────────────────────────────────────────────────────
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+]
+
+THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'django_filters',
     'drf_spectacular',
-    'blog',
-    'user',
-    'engagement',
-    'newsroom',
     'corsheaders',
     'tinymce',
     'cloudinary',
     'cloudinary_storage',
+    'guardian',
 ]
+
+LOCAL_APPS = [
+    'blog',
+    'user',
+    'engagement',
+    'newsroom',
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# ─── Auth & Permissions ───────────────────────────────────────────────────────
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
+]
+
+# Guardian: do not create an anonymous user (we use JWT)
+ANONYMOUS_USER_NAME = None
+
+# ─── Middleware ───────────────────────────────────────────────────────────────
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -74,24 +95,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'react_blog_api.wsgi.application'
 
+# ─── Database ─────────────────────────────────────────────────────────────────
 
-# Database
-# Resilient configuration for Vercel/Production
-# 1. Try DATABASE_URL (standard for Vercel/Postgres)
-# 2. Try individual DB_* env vars (Supabase credentials)
-# 3. Fallback to SQLite (Local Development)
-
+import sys
 DATABASE_URL = config('DATABASE_URL', default=None)
 
-if DATABASE_URL:
+# Detect if we are running tests (manage.py test or pytest)
+IS_TESTING = 'test' in sys.argv or 'pytest' in sys.modules
+
+if IS_TESTING:
     DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-            ssl_require=True,
-        )
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',  # Use in-memory DB for speed and isolation
+        }
     }
+elif DATABASE_URL:
+    DATABASES = {'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600, conn_health_checks=True)}
+    if 'sqlite' not in DATABASES['default']['ENGINE']:
+        DATABASES['default']['OPTIONS'] = DATABASES['default'].get('OPTIONS', {})
+        DATABASES['default']['OPTIONS']['sslmode'] = 'require'
 elif config('DB_HOST', default=None):
     DATABASES = {
         'default': {
@@ -112,8 +135,8 @@ else:
         }
     }
 
+# ─── Security & Validators ────────────────────────────────────────────────────
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -121,21 +144,23 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# ─── i18n ────────────────────────────────────────────────────────────────────
 
-# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# ─── Static & Media ───────────────────────────────────────────────────────────
 
-# Static & Media files
 STATIC_URL = config('STATIC_URL', default='static/')
 STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ─── Third Party Integrations ─────────────────────────────────────────────────
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -145,14 +170,9 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": config("API_SECRET")
 }
 
-# ─── Django REST Framework ─────────────────────────────────────────────────────
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication',),
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticatedOrReadOnly',),
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
@@ -163,16 +183,12 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# ─── OpenAPI / drf-spectacular ────────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
     'TITLE': 'CMBlog Community API',
     'DESCRIPTION': (
         'REST API for the CMBlog community platform.\n\n'
         '## Authentication\n'
         'Most read endpoints are **public**. Write operations require a **Bearer JWT token**.\n\n'
-        '1. `POST /auth/register/` — create an account\n'
-        '2. `POST /auth/login/` — get `access` + `refresh` tokens\n'
-        '3. Add `Authorization: Bearer <access_token>` header to protected requests.\n\n'
         '## Roles\n'
         '- **Contributor** — write and submit drafts for review\n'
         '- **Editor** — review submissions, publish/reject articles, manage inbox\n'
@@ -199,7 +215,6 @@ SPECTACULAR_SETTINGS = {
     'SORT_OPERATIONS': False,
 }
 
-# ─── JWT ──────────────────────────────────────────────────────────────────────
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -208,7 +223,6 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# ─── Email (console for dev; configure via .env for production) ───────────────
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)

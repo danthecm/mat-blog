@@ -21,3 +21,18 @@ class UserProfile(models.Model):
 
     class Meta:
         ordering = ('user__username',)
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import Group
+
+@receiver(post_save, sender=UserProfile)
+def sync_user_group(sender, instance, **kwargs):
+    """Ensure user group membership stays in sync with profile.role."""
+    if instance.role:
+        group, _ = Group.objects.get_or_create(name=instance.role)
+        # Remove old role groups and add the current one
+        role_groups = Group.objects.filter(name__in=['contributor', 'editor', 'admin'])
+        instance.user.groups.remove(*role_groups)
+        instance.user.groups.add(group)
+

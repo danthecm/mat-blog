@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "next/navigation";
 import PopularBlogList from '@/src/components/common/PopuplarBlogList';
 import api from '@/src/components/utils/api';
+import { store } from '@/src/components/stateManagement/store';
+import Link from 'next/link';
 import Comments from "./Comments";
 import TagsList from '@/src/components/common/TagsList';
 import AuthorInfo from '@/src/components/common/AuthorInfo';
 import Poll from '@/src/components/common/Poll';
 
 const SingleBlog = (props) => {
+  const { state: { user, isAuthenticated, role } } = useContext(store);
   const [fetching, setFetching] = useState(true);
   const [activeBlog, setActiveBlog] = useState(null);
   const params = useParams();
@@ -42,6 +45,17 @@ const SingleBlog = (props) => {
             dateTime={activeBlog.created_at} 
             content={activeBlog.content}
           />
+
+          {isAuthenticated && (role === 'admin' || role === 'editor' || (user === activeBlog.author?.username && activeBlog.status === 'draft')) && (
+            <div className="mt-6 mb-2">
+              <Link 
+                href={`/dashboard/compose?slug=${activeBlog.slug}`}
+                className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full font-bold hover:bg-primary hover:text-white transition-colors"
+              >
+                <i className="fa-solid fa-pen-to-square"></i> Edit Post
+              </Link>
+            </div>
+          )}
           
           <img 
             src={activeBlog.cover} 
