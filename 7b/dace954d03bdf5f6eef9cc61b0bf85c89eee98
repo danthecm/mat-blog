@@ -1,0 +1,16 @@
+vercel.json
+  h_a99f6724ba283e 10
+frontend/.gitignore
+  h_a99f6724ba283e 22-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "7bdace954d03bdf5f6eef9cc61b0bf85c89eee98",
+  "prompts": {},
+  "humans": {
+    "h_a99f6724ba283e": {
+      "author": "Daniel Etchie <etchiedaniel1@gmail.com>"
+    }
+  }
+}
