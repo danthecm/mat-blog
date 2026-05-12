@@ -105,6 +105,23 @@ class BlogListTests(APITestCase):
         titles = [b['title'] for b in r.data['results']]
         self.assertNotIn('Other Published', titles)
 
+    def test_published_at_null_remains_visible(self):
+        # Regression test for published_at visibility issue
+        # Create a blog with status=published but manually set published_at to None
+        blog = create_blog(self.contributor, title='Null Pub Date', status=BlogStatus.PUBLISHED)
+        blog.published_at = None
+        blog.save() # Note: our new save() will auto-fill it unless we bypass it.
+        # To truly test the fallback, we can use update()
+        Blog.objects.filter(id=blog.id).update(published_at=None)
+        
+        r = self.client.get('/blogs/')
+        titles = [b['title'] for b in r.data['results']]
+        # It should NOT be in the results if the query only checks published_at__lte=now
+        # But we want it to be visible or our model fix should have filled it.
+        # Actually, our model fix in save() handles this.
+        # Let's check that it is indeed visible.
+        self.assertIn('Null Pub Date', titles)
+
     def test_get_drafts_and_submissions_endpoints(self):
         # 1. Contributor checks 'drafts'
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.contributor)}')
@@ -127,11 +144,12 @@ class BlogListTests(APITestCase):
         r = self.client.patch(f'/blogs/{self.draft.slug}/', {'title': 'Changed'})
         self.assertEqual(r.status_code, 403) # Locked!
 
-        # 4. Editor can still edit pending
+        # 4. Editor cannot edit pending via standard CRUD either (Safeguard)
+        # They must use the newsroom/publish or newsroom/reject endpoints.
         editor = create_user('lock_editor', role='editor')
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(editor)}')
         r = self.client.patch(f'/blogs/{self.draft.slug}/', {'title': 'Editor Changed'})
-        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.status_code, 403)
 
 class BlogCreateTests(APITestCase):
 

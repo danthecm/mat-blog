@@ -56,8 +56,7 @@ const NavBar = (props) => {
       {/* ── Desktop layout ── */}
       <div className="hidden lg:flex items-center gap-4">
         <Link href="/" className="px-5 py-2.5 cursor-pointer font-bold hover:text-primary transition-colors">Home</Link>
-        <Link href="/" className="px-5 py-2.5 cursor-pointer font-bold hover:text-primary transition-colors">About</Link>
-        <Link href="/" className="px-5 py-2.5 cursor-pointer font-bold hover:text-primary transition-colors">Category</Link>
+        <Link href="/category" className="px-5 py-2.5 cursor-pointer font-bold hover:text-primary transition-colors">Category</Link>
       </div>
 
       <div className="text-lg font-poppins font-extrabold">
@@ -119,8 +118,7 @@ const NavBar = (props) => {
       {menuOpen && (
         <div className="lg:hidden flex flex-col items-start absolute top-full left-0 w-full bg-main-bg py-2 z-[100] shadow-md">
           <Link href="/" className="w-full px-5 py-3.5 border-b border-[#d1e7e5]">Home</Link>
-          <Link href="/" className="w-full px-5 py-3.5 border-b border-[#d1e7e5]">About</Link>
-          <Link href="/" className="w-full px-5 py-3.5 border-b border-[#d1e7e5]">Category</Link>
+          <Link href="/category" className="w-full px-5 py-3.5 border-b border-[#d1e7e5]">Category</Link>
           {(isAuthenticated && (groups.includes('editor') || groups.includes('admin') || groups.includes('contributor'))) && (
             <Link href="/dashboard/compose" onClick={() => setMenuOpen(false)} className="w-full px-5 py-3.5 border-b border-[#d1e7e5] font-bold text-primary">
               <i className="fa-solid fa-pen-to-square mr-2"></i> Write a Story

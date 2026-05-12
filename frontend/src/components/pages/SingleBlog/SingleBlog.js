@@ -10,9 +10,10 @@ import Comments from "./Comments";
 import TagsList from '@/src/components/common/TagsList';
 import AuthorInfo from '@/src/components/common/AuthorInfo';
 import Poll from '@/src/components/common/Poll';
+import { useRole } from '@/src/components/hooks/useRole';
 
 const SingleBlog = (props) => {
-  const { state: { user, isAuthenticated, role } } = useContext(store);
+  const { user, isAuthenticated, isEditor } = useRole();
   const [fetching, setFetching] = useState(true);
   const [activeBlog, setActiveBlog] = useState(null);
   const params = useParams();
@@ -31,6 +32,15 @@ const SingleBlog = (props) => {
     if (params.slug) fetchBlog();
   }, [params.slug]);
 
+  const handleLike = async () => {
+    try {
+      const res = await api.post(`blogs/${activeBlog.slug}/like/`);
+      setActiveBlog(prev => ({ ...prev, like_count: res.data.like_count }));
+    } catch (err) {
+      console.error("Failed to like blog", err);
+    }
+  };
+
   if (fetching) return <div className="min-h-screen flex items-center justify-center font-bold text-primary">Loading article...</div>;
   if (!activeBlog) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Blog not found</div>;
 
@@ -46,7 +56,7 @@ const SingleBlog = (props) => {
             content={activeBlog.content}
           />
 
-          {isAuthenticated && (role === 'admin' || role === 'editor' || (user === activeBlog.author?.username && activeBlog.status === 'draft')) && (
+          {isAuthenticated && (isEditor || (user === activeBlog.author?.username && activeBlog.status === 'draft')) && (
             <div className="mt-6 mb-2">
               <Link 
                 href={`/dashboard/compose?slug=${activeBlog.slug}`}
@@ -68,6 +78,16 @@ const SingleBlog = (props) => {
             dangerouslySetInnerHTML={{ __html: activeBlog.content }} 
           />
           
+          <div className="flex items-center gap-4 mt-8">
+            <button 
+              onClick={handleLike}
+              className="flex items-center gap-2 px-6 py-3 bg-[#e8f3f3] text-primary rounded-full font-bold hover:bg-primary hover:text-white transition-colors"
+            >
+              <i className="fa-regular fa-thumbs-up text-xl"></i>
+              <span>{activeBlog.like_count || 0} Likes</span>
+            </button>
+          </div>
+
           {/* Decorative Divider */}
           <div className="flex items-center justify-center gap-4 my-16 opacity-20">
             <div className="h-[2px] w-24 bg-primary rounded-full"></div>

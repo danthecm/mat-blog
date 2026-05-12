@@ -144,12 +144,76 @@ const AuthorProfile = ({ username }) => {
             
             {profile.profile?.website && (
               <a href={profile.profile.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold text-sm inline-flex items-center">
-                <i className="fa-solid fa-link mr-2"></i> {new URL(profile.profile.website).hostname}
+                <i className="fa-solid fa-link mr-2"></i> {(() => {
+                  try {
+                    return new URL(profile.profile.website).hostname;
+                  } catch (e) {
+                    return profile.profile.website.replace(/^https?:\/\//, '').split('/')[0];
+                  }
+                })()}
               </a>
             )}
           </>
         )}
       </div>
+
+      <div className="mt-16">
+        <h2 className="text-2xl font-bold text-gray-900 mb-8 border-b pb-4">
+          Posts by <span className="text-primary">{profile.username}</span>
+        </h2>
+        <AuthorPosts username={profile.username} />
+      </div>
+    </div>
+  );
+};
+
+const AuthorPosts = ({ username }) => {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        // Explicitly filter for published posts so drafts aren't leaked on the public profile
+        const res = await api.get(`blogs/?author__username=${username}&status=published`);
+        setPosts(res.data.results || res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch author posts", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (username) fetchPosts();
+  }, [username]);
+
+  if (loading) return <div className="text-center py-10 text-gray-500 font-bold">Loading posts...</div>;
+  if (posts.length === 0) return <div className="text-center py-10 text-gray-400 italic">No posts published yet.</div>;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {posts.map(post => (
+        <a key={post.id} href={`/${post.slug}`} className="group block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+          <div className="h-48 overflow-hidden bg-gray-100">
+            <img 
+              src={post.cover} 
+              alt={post.title} 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+          <div className="p-5">
+            <p className="text-xs font-bold text-primary mb-2 uppercase tracking-wide">
+              {post.category?.name || 'Uncategorized'}
+            </p>
+            <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+              {post.title}
+            </h3>
+            <div className="flex items-center justify-between text-xs text-gray-500 font-medium">
+              <span>{new Date(post.created_at).toLocaleDateString()}</span>
+              <span><i className="fa-solid fa-eye mr-1"></i> {post.view_count || 0}</span>
+            </div>
+          </div>
+        </a>
+      ))}
     </div>
   );
 };

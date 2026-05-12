@@ -38,6 +38,20 @@ class CommentLike(models.Model):
         return f'Like on comment {self.comment_id} from {self.ip}'
 
 
+class BlogLike(models.Model):
+    blog = models.ForeignKey(Blog, related_name='likes', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name='blog_likes')
+    ip = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # We handle uniqueness in the view logic for more flexibility (user or ip)
+        pass
+
+    def __str__(self):
+        return f'Like on blog {self.blog.title} by {self.user.username if self.user else self.ip}'
+
+
 # ─── Newsletter ───────────────────────────────────────────────────────────────
 
 class NewsletterSubscriber(models.Model):

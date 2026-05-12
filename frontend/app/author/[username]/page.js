@@ -7,7 +7,10 @@ export async function generateMetadata({ params }) {
     const res = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}users/${username}/`);
     const profile = res.data;
 
-    const title = `${profile.profile?.first_name} ${profile.profile?.last_name}`.trim() || profile.username;
+    const firstName = profile.profile?.first_name || '';
+    const lastName = profile.profile?.last_name || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    const title = fullName || profile.username;
 
     return {
       title: `${title}'s Profile`,

@@ -61,6 +61,14 @@ class SubmitForReviewTests(APITestCase):
         self.assertEqual(r.status_code, 400)
         self.assertIn('already published', r.data['error'])
 
+    def test_cannot_submit_already_pending_blog(self):
+        self.draft.status = BlogStatus.PENDING
+        self.draft.save()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.contributor)}')
+        r = self.client.post(f'/newsroom/blogs/{self.draft.slug}/submit/')
+        self.assertEqual(r.status_code, 400)
+        self.assertIn('already under review', r.data['error'])
+
     def test_unauthenticated_submit_returns_401(self):
         r = self.client.post(f'/newsroom/blogs/{self.draft.slug}/submit/')
         self.assertEqual(r.status_code, 401)
@@ -108,6 +116,28 @@ class EditorInboxTests(APITestCase):
         self.client.get('/newsroom/inbox/')
         self.notification.refresh_from_db()
         self.assertTrue(self.notification.is_read)
+
+    def test_inbox_marking_read_is_scoped_to_page(self):
+        """Regression test for Critical Error #3: Marking read should only affect displayed items."""
+        # Create another notification
+        other_blog = create_blog(self.contributor, title='Other Pending', status=BlogStatus.PENDING)
+        other_notif = SubmissionNotification.objects.create(
+            blog=other_blog, submitted_by=self.contributor, message='Review me too'
+        )
+        
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
+        
+        # Request page 1 with page_size=1
+        r = self.client.get('/newsroom/inbox/?page=1&page_size=1')
+        self.assertEqual(r.status_code, 200)
+        
+        # One of them should be read, the other NOT.
+        # super().list() returns them in order of ID (usually) or as defined in queryset.
+        read_count = SubmissionNotification.objects.filter(is_read=True).count()
+        unread_count = SubmissionNotification.objects.filter(is_read=False).count()
+        
+        self.assertEqual(read_count, 1, "Only the notification on the first page should be marked read")
+        self.assertEqual(unread_count, 1, "The notification on the second page should remain unread")
 
     def test_all_flag_returns_read_and_unread(self):
         self.notification.is_read = True

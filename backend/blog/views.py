@@ -105,11 +105,18 @@ class BlogViewSet(ModelViewSet):
                     Q(author=user, status=BlogStatus.DRAFT)
                 )
 
-            # Contributors: all published + their own posts
-            return qs.filter(Q(status=BlogStatus.PUBLISHED) | Q(author=user))
+            # Contributors: all published (and past date) + their own posts
+            return qs.filter(
+                (Q(status=BlogStatus.PUBLISHED) & (Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True))) | 
+                Q(author=user)
+            )
 
         # Anonymous: published only
-        return qs.filter(status=BlogStatus.PUBLISHED)
+        return qs.filter(
+            status=BlogStatus.PUBLISHED
+        ).filter(
+            Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True)
+        )
 
     def destroy(self, request, *args, **kwargs):
         """Soft delete: move post to trash."""
@@ -127,18 +134,16 @@ class BlogViewSet(ModelViewSet):
         assign_perm('blog.delete_blog', self.request.user, instance)
 
     def perform_update(self, serializer):
-        from guardian.shortcuts import assign_perm, remove_perm
+        from guardian.shortcuts import remove_perm
         instance = serializer.save()
         
         # Defense in Depth: Revoke author's object-level permissions if NOT in draft.
         # This ensures that even if has_object_permission is bypassed, 
         # the author still has no underlying DB rights to the object.
-        if instance.status == BlogStatus.DRAFT:
-            assign_perm('blog.change_blog', instance.author, instance)
-            assign_perm('blog.delete_blog', instance.author, instance)
-        else:
+        if instance.status != BlogStatus.DRAFT:
             remove_perm('blog.change_blog', instance.author, instance)
-            remove_perm('blog.delete_blog', instance.author, instance)
+            # authors can usually keep delete_blog (for trash), but change_blog 
+            # MUST be revoked during review/publication.
 
     def retrieve(self, request, *args, **kwargs):
         """Track view count on detail page."""
@@ -159,6 +164,31 @@ class BlogViewSet(ModelViewSet):
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
+    def like(self, request, slug=None):
+        """POST /blogs/<slug>/like/ - Toggle like on a blog post."""
+        from engagement.models import BlogLike
+        instance = self.get_object()
+        ip = get_client_ip(request)
+        user = request.user if request.user.is_authenticated else None
+        
+        # Check for existing like by user (priority) or ip (anonymous fallback)
+        if user:
+            existing_like = BlogLike.objects.filter(blog=instance, user=user).first()
+        else:
+            existing_like = BlogLike.objects.filter(blog=instance, ip=ip, user__isnull=True).first()
+
+        if existing_like:
+            existing_like.delete()
+            Blog.objects.filter(pk=instance.pk).update(like_count=max(0, instance.like_count - 1))
+            instance.like_count = max(0, instance.like_count - 1)
+            return Response({'liked': False, 'like_count': instance.like_count})
+        else:
+            BlogLike.objects.create(blog=instance, ip=ip, user=user)
+            Blog.objects.filter(pk=instance.pk).update(like_count=instance.like_count + 1)
+            instance.like_count += 1
+            return Response({'liked': True, 'like_count': instance.like_count})
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def drafts(self, request):
@@ -303,7 +333,7 @@ class BlogViewSet(ModelViewSet):
 )
 class BlogCategoryViewSet(ModelViewSet):
     queryset = BlogCategory.objects.annotate(
-        blog_count=Count('blogs', filter=Q(blogs__status='published'))
+        blog_count=Count('blogs', filter=Q(blogs__status=BlogStatus.PUBLISHED))
     ).order_by('name')
     serializer_class = BlogCategorySerializer
     lookup_field = 'slug'
@@ -367,7 +397,10 @@ class FeaturedBlogView(ListAPIView):
 
     def get_queryset(self):
         return Blog.objects.filter(
-            featured=True, status='published'
+            featured=True, 
+            status=BlogStatus.PUBLISHED
+        ).filter(
+            Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True)
         ).select_related('author', 'category').prefetch_related('tags').order_by('-published_at')[:4]
 
 
@@ -379,9 +412,14 @@ class TopBlogView(ListAPIView):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return Blog.objects.filter(status='published').annotate(
-            comment_count=Count('comments')
-        ).select_related('author', 'category').prefetch_related('tags').order_by('-comment_count')[:4]
+        from django.db.models import F
+        return Blog.objects.filter(
+            status=BlogStatus.PUBLISHED, 
+            published_at__lte=timezone.now()
+        ).annotate(
+            comment_count=Count('engagement_comments', distinct=True),
+            popularity_score=F('view_count') + F('like_count') * 5 + Count('engagement_comments', distinct=True) * 10
+        ).select_related('author', 'category').prefetch_related('tags').order_by('-popularity_score')[:4]
 
 
 # ─── Trending (last 24 hours by view count) ───────────────────────────────────
@@ -394,10 +432,12 @@ class TrendingBlogView(ListAPIView):
     def get_queryset(self):
         since = timezone.now() - timezone.timedelta(hours=24)
         return Blog.objects.filter(
-            status='published',
+            status=BlogStatus.PUBLISHED,
             views__viewed_at__gte=since
+        ).filter(
+            Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True)
         ).annotate(
-            recent_views=Count('views')
+            recent_views=Count('views', distinct=True)
         ).select_related('author', 'category').prefetch_related('tags').order_by('-recent_views')[:6]
 
 
@@ -423,7 +463,9 @@ class SearchView(ListAPIView):
             Q(author__username__icontains=q) |
             Q(tags__title__icontains=q) |
             Q(category__name__icontains=q),
-            status='published'
+            status=BlogStatus.PUBLISHED
+        ).filter(
+            Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True)
         ).distinct().select_related('author', 'category').prefetch_related('tags').order_by('-published_at')
 
 
@@ -446,7 +488,10 @@ class SimilarBlogsView(ListAPIView):
         except Blog.DoesNotExist:
             return Blog.objects.none()
         return Blog.objects.filter(
-            tags__id__in=tag_ids, status='published'
+            tags__id__in=tag_ids, 
+            status=BlogStatus.PUBLISHED
+        ).filter(
+            Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True)
         ).exclude(id=blog_id).distinct()[:4]
 
 

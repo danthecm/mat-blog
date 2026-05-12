@@ -270,3 +270,21 @@ class UserSerializerGroupsTests(APITestCase):
         group_names = list(target.groups.values_list('name', flat=True))
         self.assertIn('editor', group_names)
         self.assertNotIn('contributor', group_names)
+
+    def test_sync_user_group_signal_safety(self):
+        """Regression test for Critical Error #4: Signal should handle null/invalid roles gracefully."""
+        from django.contrib.auth.models import Group
+        user = User.objects.create_user(username='sig_safe', password='password123')
+        profile = UserProfile.objects.create(user=user, role='') # Empty string instead of None
+        
+        self.assertEqual(user.groups.count(), 0, "No group should be assigned for empty role")
+        
+        # Test invalid role
+        profile.role = 'hacker'
+        profile.save()
+        self.assertEqual(user.groups.count(), 0, "No group should be assigned for invalid role")
+        
+        # Test recognition of valid role
+        profile.role = 'editor'
+        profile.save()
+        self.assertTrue(user.groups.filter(name='editor').exists())

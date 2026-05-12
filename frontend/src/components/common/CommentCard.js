@@ -8,8 +8,18 @@ import { toast } from '@/src/components/utils/swal';
 const CommentCard = ({ comment, onReply, depth = 0 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState("");
+  const [likeCount, setLikeCount] = useState(comment.like_count || 0);
   
   const replies = comment.replies || [];
+
+  const handleLike = async () => {
+    try {
+      const res = await api.post(`comments/${comment.id}/like/`);
+      setLikeCount(res.data.like_count);
+    } catch (err) {
+      toast.error("Failed to like comment");
+    }
+  };
 
   const handleReplySubmit = async (e) => {
     e.preventDefault();
@@ -47,7 +57,13 @@ const CommentCard = ({ comment, onReply, depth = 0 }) => {
           {comment.content}
         </p>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
+            <button 
+              onClick={handleLike}
+              className="text-primary text-[12px] font-extrabold hover:text-[#008f87] flex items-center gap-1.5 transition-colors"
+            >
+              <i className="fa-regular fa-thumbs-up"></i> {likeCount > 0 ? `${likeCount} ` : ''}LIKE
+            </button>
             <button 
               onClick={() => setShowReplyForm(!showReplyForm)}
               className="text-primary text-[12px] font-extrabold hover:text-[#008f87] flex items-center gap-1.5 transition-colors"

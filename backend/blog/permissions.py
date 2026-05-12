@@ -30,7 +30,13 @@ class IsAuthorOrEditorOrReadOnly(BasePermission):
     """
     - Read (GET/HEAD/OPTIONS): anyone
     - Create: any authenticated user
-    - Update/Delete: determined by Django permissions ('change_blog', 'delete_blog')
+    - Update/Delete: see has_object_permission for full rules
+
+    Editorial lock rules:
+    - Admins can edit/delete any post at any status (global perms bypass).
+    - Editors can edit DRAFT posts globally, but CANNOT touch PENDING posts
+      through this view — they must use the inbox workflow (publish/reject).
+    - Authors can only edit/delete their own DRAFT posts (object-level perms).
     """
 
     def has_permission(self, request, view):
@@ -45,21 +51,31 @@ class IsAuthorOrEditorOrReadOnly(BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        # 1. Global permissions (Editor/Admin)
-        if request.method == 'DELETE':
-            if request.user.has_perm('blog.delete_blog'):
-                return True
-        else:
-            if request.user.has_perm('blog.change_blog'):
-                return True
+        is_delete = request.method == 'DELETE'
+        global_perm = 'blog.delete_blog' if is_delete else 'blog.change_blog'
+        object_perm = global_perm  # same codename, checked at object level below
 
-        # 2. Object-level permissions (Author)
-        # Authors can ONLY edit or delete their own posts if they are still in DRAFT status.
-        # Once submitted (PENDING) or PUBLISHED, they lose these rights.
-        if request.method == 'DELETE':
-            return request.user.has_perm('blog.delete_blog', obj) and obj.status == BlogStatus.DRAFT
-        
-        return request.user.has_perm('blog.change_blog', obj) and obj.status == BlogStatus.DRAFT
+        # 1. Admins have the global delete_blog permission — they bypass all locks.
+        #    Editors only have global change_blog (not delete_blog), so the
+        #    admin-only path is: has global delete_blog perm.
+        if request.user.has_perm('blog.delete_blog') and is_admin(request.user):
+            return True
+
+        # 2. PENDING edit-lock: neither editors nor contributors may mutate a
+        #    pending post via the standard CRUD path.  Editors must use the
+        #    newsroom inbox (publish / reject / notes) instead.
+        if obj.status == BlogStatus.PENDING:
+            return False
+
+        # 3. Editors can change (but not delete) any non-pending post.
+        if not is_delete and request.user.has_perm('blog.change_blog'):
+            return True
+
+        # 4. Authors can edit/delete their own posts, but only while in DRAFT.
+        #    Object-level perms are revoked on submit and restored on recall/reject.
+        if obj.status != BlogStatus.DRAFT:
+            return False
+        return request.user.has_perm(object_perm, obj)
 
 
 class IsApprovedContributor(BasePermission):

@@ -6,19 +6,13 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/src/components/utils/api';
 
+import { useRole } from '@/src/components/hooks/useRole';
+
 const DashboardLayout = ({ children }) => {
-  const { state: { user, role, groups, isAuthenticated }, dispatch } = useContext(store);
+  const { user, role, groups, isAuthenticated, isAdmin, isEditor, dispatch } = useRole();
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
-
-  // Helper — use groups (new) with role as fallback (backward compat)
-  const inGroup = (...names) => {
-    if (Array.isArray(groups) && groups.length > 0) return names.some(n => groups.includes(n));
-    return role ? names.includes(role) : false; // fallback if groups not yet loaded
-  };
-  const isAdmin   = inGroup('admin');
-  const isEditor  = inGroup('editor', 'admin');
 
   useEffect(() => {
     const checkAuth = async () => {

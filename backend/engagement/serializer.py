@@ -18,11 +18,14 @@ class CommentSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.ListSerializer(child=serializers.DictField()))
     def get_replies(self, obj):
-        # Only include direct replies on top-level comments
-        if obj.parent is None:
-            children = obj.replies.filter(is_approved=True)
-            return CommentSerializer(children, many=True).data
-        return []
+        depth = self.context.get('depth', 1)
+        if depth >= 4:
+            return []
+        children = obj.replies.filter(is_approved=True)
+        # Pass the incremented depth to the context
+        context = dict(self.context)
+        context['depth'] = depth + 1
+        return CommentSerializer(children, many=True, context=context).data
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):

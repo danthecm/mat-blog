@@ -87,6 +87,7 @@ class Blog(DateAbstract):
 
     # Metrics
     view_count = models.PositiveIntegerField(default=0)
+    like_count = models.PositiveIntegerField(default=0)
     read_time = models.PositiveIntegerField(default=0)  # minutes, auto-calculated
 
     class Meta:
@@ -101,6 +102,11 @@ class Blog(DateAbstract):
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title, allow_unicode=True)
         self.read_time = self._calculate_read_time()
+        
+        # Ensure published_at is set for published posts so they appear in public queries
+        if self.status == BlogStatus.PUBLISHED and not self.published_at:
+            self.published_at = timezone.now()
+            
         super().save(*args, **kwargs)
 
     def __str__(self):

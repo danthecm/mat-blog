@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "./Header";
 import RecentPostCard from '@/src/components/common/RecentPostCard';
@@ -13,10 +13,11 @@ const fetcher = url => axios.get(url).then(res => res.data);
 
 const Home = (props) => {
   const router = useRouter();
+  const [page, setPage] = useState(1);
   const { data: featuredRes } = useSWR(FEATURED_BLOG_URL, fetcher);
-  const { data: recentRes, error: recentError } = useSWR(BLOG_URL, fetcher);
+  const { data: recentRes, error: recentError, isLoading: recentLoading } = useSWR(`${BLOG_URL}?page=${page}`, fetcher);
   const { data: tagsRes } = useSWR(BLOG_TAGS_URL, fetcher);
-  const { data: catRes } = useSWR(BLOG_CATEGORIES_URL, fetcher);
+  const { data: catRes, isLoading: catLoading } = useSWR(BLOG_CATEGORIES_URL, fetcher);
   
   const featured = featuredRes ? (Array.isArray(featuredRes) ? featuredRes : (featuredRes.results || [])) : [];
   const recentRaw = recentRes ? (Array.isArray(recentRes) ? recentRes : (recentRes.results || [])) : [];
@@ -26,7 +27,7 @@ const Home = (props) => {
   const featuredIds = new Set(featured.map(b => b.id));
   const filteredRecent = recentRaw.filter(b => !featuredIds.has(b.id));
 
-  const loading = !recentRes && !recentError;
+  const loading = recentLoading || (!recentRes && !recentError);
 
   return (
     <>
@@ -39,6 +40,27 @@ const Home = (props) => {
           <section className="grid grid-cols-1 md:grid-cols-2 gap-[3rem]">
             <RecentPostCard blogs={filteredRecent} loading={loading} />
           </section>
+          
+          {/* Pagination Controls */}
+          {!loading && recentRes && !Array.isArray(recentRes) && (recentRes.next || recentRes.previous) && (
+            <div className="flex justify-between items-center mt-8">
+              <button 
+                onClick={() => setPage(p => Math.max(1, p - 1))} 
+                disabled={!recentRes.previous}
+                className="bg-primary text-white px-5 py-2 rounded-md font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#008f87] transition-colors"
+              >
+                <i className="fa-solid fa-arrow-left mr-2"></i> Previous
+              </button>
+              <span className="text-gray-500 font-bold text-sm">Page {page}</span>
+              <button 
+                onClick={() => setPage(p => p + 1)} 
+                disabled={!recentRes.next}
+                className="bg-primary text-white px-5 py-2 rounded-md font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#008f87] transition-colors"
+              >
+                Next <i className="fa-solid fa-arrow-right ml-2"></i>
+              </button>
+            </div>
+          )}
         </div>
         
         <aside>
@@ -49,8 +71,11 @@ const Home = (props) => {
             <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0">Categories</span>
           </h3>
           <div className="mb-[60px]">
-            {categories.length === 0 && !loading && (
+            {(categories.length === 0 && !catLoading) && (
               <div className="text-gray-400 italic px-[10px]">No categories yet.</div>
+            )}
+            {catLoading && categories.length === 0 && (
+               <div className="text-gray-400 animate-pulse px-[10px]">Loading...</div>
             )}
             {categories.slice(0, 8).map((cat, index, array) => (
               <div 

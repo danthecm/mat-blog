@@ -26,13 +26,30 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import Group
 
+
+VALID_ROLES = {'contributor', 'editor', 'admin'}
+
+
 @receiver(post_save, sender=UserProfile)
 def sync_user_group(sender, instance, **kwargs):
-    """Ensure user group membership stays in sync with profile.role."""
-    if instance.role:
-        group, _ = Group.objects.get_or_create(name=instance.role)
-        # Remove old role groups and add the current one
-        role_groups = Group.objects.filter(name__in=['contributor', 'editor', 'admin'])
-        instance.user.groups.remove(*role_groups)
-        instance.user.groups.add(group)
+    """
+    Keep Django Group membership in sync with UserProfile.role.
+
+    Safety rules:
+    - Only runs when `role` is a recognised, non-empty value.
+    - Guards against None / unexpected strings that would cause an
+      IntegrityError on auth_group.name NOT NULL constraint.
+    - Does NOT call profile.save() itself, so there is no recursion risk.
+    """
+    role = instance.role
+    if not role or role not in VALID_ROLES:
+        # Unknown or blank role — don't touch group membership.
+        return
+
+    group, _ = Group.objects.get_or_create(name=role)
+    # Remove ALL three role groups then add the correct one.
+    # Using sets to avoid an extra query when the user is already in the right group.
+    current_role_groups = Group.objects.filter(name__in=VALID_ROLES)
+    instance.user.groups.remove(*current_role_groups)
+    instance.user.groups.add(group)
 

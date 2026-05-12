@@ -12,12 +12,18 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-+t=%2q!u_f&4ev-u8dp!rviha3x_0)i+z+a^%-5c8*jb6wbbd*')
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ["*"]
+# In production, set ALLOWED_HOSTS in the environment as a comma-separated list,
+# e.g. ALLOWED_HOSTS=api.example.com,www.example.com
+# The wildcard fallback is only safe in local DEBUG mode.
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='', cast=lambda v: [h.strip() for h in v.split(',') if h.strip()])
 
 
 # ─── Apps ─────────────────────────────────────────────────────────────────────
@@ -162,7 +168,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ─── Third Party Integrations ─────────────────────────────────────────────────
 
-CORS_ORIGIN_ALLOW_ALL = True
+# Allow all origins in development; restrict to an explicit list in production.
+# Set CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com in .env
+if DEBUG:
+    CORS_ORIGIN_ALLOW_ALL = True
+else:
+    CORS_ORIGIN_ALLOW_ALL = False
+    CORS_ALLOWED_ORIGINS = config(
+        'CORS_ALLOWED_ORIGINS',
+        default='',
+        cast=lambda v: [o.strip() for o in v.split(',') if o.strip()],
+    )
+
+# ─── Site URL (used in outbound emails) ──────────────────────────────────────
+# Set SITE_URL=https://yourdomain.com in production env.
+SITE_URL = config('SITE_URL', default='http://localhost:3000')
 
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": config("CLOUD_NAME"),

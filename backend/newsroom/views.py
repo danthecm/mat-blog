@@ -43,6 +43,9 @@ class SubmitForReviewView(APIView):
         if blog.status == BlogStatus.PUBLISHED:
             return Response({'error': 'This blog is already published.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if blog.status == BlogStatus.PENDING:
+            return Response({'error': 'This blog is already under review.'}, status=status.HTTP_400_BAD_REQUEST)
+
         blog.status = BlogStatus.PENDING
         blog.save(update_fields=['status'])
 
@@ -83,6 +86,8 @@ class SubmitForReviewView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+from blog.views import BlogPagination
+
 @extend_schema(
     tags=['newsroom'],
     summary='Editor inbox — list pending submission notifications (editor/admin only)',
@@ -95,6 +100,7 @@ class EditorInboxView(ListAPIView):
     Lists all pending submission notifications for editors/admins.
     """
     serializer_class = SubmissionNotificationSerializer
+    pagination_class = BlogPagination
     permission_classes = [IsAuthenticated, IsEditorOrHigher]
 
     def get_queryset(self):
@@ -110,8 +116,11 @@ class EditorInboxView(ListAPIView):
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
-        # Mark all unread as read when viewed
-        SubmissionNotification.objects.filter(is_read=False).update(is_read=True)
+        # Mark only the notifications that were actually returned in this page as read.
+        # Avoid a global update that would silently dismiss items on other pages.
+        returned_ids = [item['id'] for item in response.data.get('results', response.data) if 'id' in item]
+        if returned_ids:
+            SubmissionNotification.objects.filter(id__in=returned_ids, is_read=False).update(is_read=True)
         return response
 
 
@@ -170,7 +179,7 @@ class PublishBlogView(APIView):
                         f'A new featured story has been published!\n\n'
                         f'{blog.title}\n'
                         f'By {blog.author.username}\n\n'
-                        f'Read it at: http://localhost:3000/{blog.slug}'
+                        f'Read it at: {settings.SITE_URL}/{blog.slug}'
                     ),
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=subscriber_emails,

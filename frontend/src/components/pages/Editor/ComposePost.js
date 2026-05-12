@@ -77,30 +77,33 @@ const ComposePost = () => {
   const searchParams = useSearchParams();
   const slugFromUrl = searchParams.get('slug');
   const saveTimeoutRef = useRef(null);
+  const savingRef = useRef(false);
   const [autoSaveInterval, setAutoSaveInterval] = useState(30000); // default 30s
   
   const resolveTagIds = async () => {
-    const ids = [];
-    for (const opt of selectedTags) {
+    // Resolve all new tags at once to avoid state interleaving issues
+    const resolvedTags = await Promise.all(selectedTags.map(async (opt) => {
       if (opt.__isNew__) {
         try {
           const newId = await createTagOnServer(opt.label);
-          ids.push(newId);
-          setSelectedTags((prev) =>
-            prev.map((t) => (t === opt ? { value: newId, label: opt.label } : t))
-          );
+          return { value: newId, label: opt.label, __isNew__: false };
         } catch {
           toast.error(`Failed to create tag "${opt.label}"`);
+          return null;
         }
-      } else {
-        ids.push(opt.value);
       }
-    }
-    return ids;
+      return opt;
+    }));
+
+    const validTags = resolvedTags.filter(t => t !== null);
+    setSelectedTags(validTags);
+    return validTags.map(t => t.value);
   };
 
   // Save Draft Helper
   const saveDraft = async () => {
+    if (savingRef.current) return slug;
+    savingRef.current = true;
     try {
       const tagIds = await resolveTagIds();
 
@@ -112,6 +115,7 @@ const ComposePost = () => {
         tag_ids: tagIds,
       };
 
+      let currentSlug = slug;
       if (!slug) {
         // Create new draft using FormData if cover exists
         const formData = new FormData();
@@ -125,21 +129,23 @@ const ComposePost = () => {
         const res = await api.post('blogs/', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        setSlug(res.data.slug);
+        currentSlug = res.data.slug;
+        setSlug(currentSlug);
         setBlogStatus(res.data.status);
         setCoverPreview(res.data.cover);
         setCoverFile(null);
         setStatus('Saved');
-        return res.data.slug;
       } else {
         // Update existing draft
-        const res = await api.patch(`blogs/${slug}/`, payload);
+        await api.patch(`blogs/${slug}/`, payload);
         setStatus('Saved');
-        return slug;
       }
+      return currentSlug;
     } catch (err) {
       setStatus('Error saving draft');
       throw err;
+    } finally {
+      savingRef.current = false;
     }
   };
 

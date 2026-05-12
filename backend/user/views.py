@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -101,12 +101,7 @@ class UpdateUserRoleView(APIView):
 
         profile, _ = UserProfile.objects.get_or_create(user=target_user)
         profile.role = new_role
-        profile.save()
-
-        # Sync Group membership — single source of truth for permission checks
-        target_user.groups.clear()
-        group, _ = Group.objects.get_or_create(name=new_role)
-        target_user.groups.add(group)
+        profile.save()  # triggers sync_user_group signal — no manual group sync needed
 
         return Response({'message': f'{username} is now a {new_role}.'})
 
