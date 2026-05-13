@@ -9,6 +9,8 @@ import useSWR from 'swr';
 import { BLOG_URL, FEATURED_BLOG_URL, BLOG_CATEGORIES_URL, BLOG_TAGS_URL } from '@/src/components/utils/urls';
 import api from '@/src/components/utils/api';
 
+import LoadingSpinner from '@/src/components/common/LoadingSpinner';
+
 const fetcher = url => api.get(url).then(res => res.data);
 
 const Home = (props) => {
@@ -75,7 +77,7 @@ const Home = (props) => {
               <div className="text-gray-400 italic px-[10px]">No categories yet.</div>
             )}
             {catLoading && categories.length === 0 && (
-               <div className="text-gray-400 animate-pulse px-[10px]">Loading...</div>
+               <LoadingSpinner size="sm" text="Loading..." />
             )}
             {categories.slice(0, 8).map((cat, index, array) => (
               <div 

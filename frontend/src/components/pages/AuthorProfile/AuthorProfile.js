@@ -4,6 +4,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import api from '@/src/components/utils/api';
 import { store } from '@/src/components/stateManagement/store';
 import Swal from 'sweetalert2';
+import LoadingSpinner from '@/src/components/common/LoadingSpinner';
 
 const AuthorProfile = ({ username }) => {
   const { state: { user: currentUser } } = useContext(store);
@@ -67,7 +68,7 @@ const AuthorProfile = ({ username }) => {
     }
   };
 
-  if (loading) return <div className="min-h-[50vh] flex items-center justify-center">Loading profile...</div>;
+  if (loading) return <LoadingSpinner text="Loading profile..." />;
   if (error) return <div className="min-h-[50vh] flex items-center justify-center text-red-600">{error}</div>;
 
   return (
@@ -186,7 +187,7 @@ const AuthorPosts = ({ username }) => {
     if (username) fetchPosts();
   }, [username]);
 
-  if (loading) return <div className="text-center py-10 text-gray-500 font-bold">Loading posts...</div>;
+  if (loading) return <LoadingSpinner text="Loading posts..." />;
   if (posts.length === 0) return <div className="text-center py-10 text-gray-400 italic">No posts published yet.</div>;
 
   return (

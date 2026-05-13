@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/src/components/utils/api';
 import FeaturedCard from '@/src/components/common/FeaturedCard';
+import LoadingSpinner from '@/src/components/common/LoadingSpinner';
 
 const SearchResults = () => {
   const searchParams = useSearchParams();
@@ -36,9 +37,7 @@ const SearchResults = () => {
       </div>
       
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
+        <LoadingSpinner text="Searching for posts..." />
       ) : results.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
           <i className="fa-solid fa-magnifying-glass text-4xl text-gray-200 mb-4"></i>

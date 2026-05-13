@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '@/src/components/utils/api';
 import { toast, confirmModal } from '@/src/components/utils/swal';
+import LoadingSpinner from '@/src/components/common/LoadingSpinner';
 
 const CategoryManager = () => {
   const [categories, setCategories] = useState([]);
@@ -106,7 +107,7 @@ const CategoryManager = () => {
         {/* List */}
         <div className="lg:col-span-2">
           {loading ? (
-            <div className="text-center py-10 text-gray-500 font-medium animate-pulse">Loading categories...</div>
+            <LoadingSpinner size="sm" text="Loading categories..." />
           ) : categories.length === 0 ? (
             <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
               No categories found. Create one to get started.

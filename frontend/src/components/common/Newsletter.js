@@ -51,7 +51,9 @@ const Newsletter = () => {
                 disabled={status === "loading"}
                 className="bg-[#1e1e1e] text-white font-bold px-8 py-3.5 rounded-xl hover:bg-black transition-all shadow-lg active:scale-95"
               >
-                {status === "loading" ? "..." : "SUBSCRIBE"}
+                {status === "loading" ? (
+                  <i className="fa-solid fa-circle-notch fa-spin"></i>
+                ) : "SUBSCRIBE"}
               </button>
             </form>
           )}

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useContext } from "react";
-import { useParams } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import PopularBlogList from '@/src/components/common/PopuplarBlogList';
 import api from '@/src/components/utils/api';
 import { store } from '@/src/components/stateManagement/store';
@@ -12,6 +12,7 @@ import AuthorInfo from '@/src/components/common/AuthorInfo';
 import Poll from '@/src/components/common/Poll';
 import { useRole } from '@/src/components/hooks/useRole';
 import RichTextRenderer from '@/src/components/common/RichTextRenderer';
+import LoadingSpinner from '@/src/components/common/LoadingSpinner';
 
 import { resolveImageUrl } from '@/src/components/utils/imageHelper';
 
@@ -36,6 +37,7 @@ const SingleBlog = ({ isPreview = false, ...props }) => {
         }
       } catch (err) {
         console.error("Failed to fetch blog");
+        setActiveBlog(null);
       } finally {
         setFetching(false);
       }
@@ -52,8 +54,8 @@ const SingleBlog = ({ isPreview = false, ...props }) => {
     }
   };
 
-  if (fetching) return <div className="min-h-screen flex items-center justify-center font-bold text-primary">Loading article...</div>;
-  if (!activeBlog) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Blog not found</div>;
+  if (fetching) return <LoadingSpinner text="Fetching article..." />;
+  if (!activeBlog) return notFound();
 
   return (
     <section className="relative grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-x-12 px-4 py-8 md:px-10 lg:px-16 lg:py-16 bg-main-bg overflow-x-hidden">

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import api from '@/src/components/utils/api';
 import { BLOG_CATEGORIES_URL } from '@/src/components/utils/urls';
 import ErrorBoundary from '@/src/components/common/ErrorBoundary';
+import LoadingSpinner from '@/src/components/common/LoadingSpinner';
 
 const CategoryPage = () => {
   const [categories, setCategories] = useState([]);
@@ -33,9 +34,7 @@ const CategoryPage = () => {
           </h1>
           
           {loading ? (
-            <div className="text-center py-20 text-gray-500 font-bold">
-              Loading categories...
-            </div>
+            <LoadingSpinner text="Loading categories..." />
           ) : categories.length === 0 ? (
             <div className="text-center py-20 text-gray-500 italic">
               No categories found.

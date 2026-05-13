@@ -4,6 +4,7 @@ import React, { useEffect, useState, useContext } from "react";
 import api from '@/src/components/utils/api';
 import CommentCard from '@/src/components/common/CommentCard';
 import { store } from '@/src/components/stateManagement/store';
+import LoadingSpinner from '@/src/components/common/LoadingSpinner';
 
 import { toast } from '@/src/components/utils/swal';
 
@@ -69,7 +70,7 @@ const Comments = ({ blogId }) => {
 
       <div className="flex flex-col gap-8">
         {loading && comments.length === 0 ? (
-          <p className="text-gray-500">Loading discussion...</p>
+          <LoadingSpinner size="sm" text="Loading discussion..." />
         ) : comments.length === 0 ? (
           <p className="text-gray-500 italic">No comments yet. Be the first to share your thoughts!</p>
         ) : (

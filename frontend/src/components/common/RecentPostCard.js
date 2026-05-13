@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import AuthorInfo from "./AuthorInfo";
+import LoadingSpinner from "./LoadingSpinner";
 
 import { resolveImageUrl } from "@/src/components/utils/imageHelper";
 
@@ -14,7 +15,7 @@ const RecentPostCard = ({ blogs, loading }) => {
     return str.replace(regex, "").replace(regex2, " ");
   };
 
-  if (loading) return <div className="text-[#555]">Loading recent articles...</div>;
+  if (loading) return <LoadingSpinner text="Loading articles..." />;
 
   return (
     <>
