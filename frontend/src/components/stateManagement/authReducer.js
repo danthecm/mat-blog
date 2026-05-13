@@ -2,9 +2,11 @@ export const authState = {
   user: null,
   accessToken: null,
   isAuthenticated: false,
+  isHydrated: false, // Track if we've checked localStorage on mount
   role: null,
-  groups: [],   // Array of group names from the API, e.g. ["editor"]
+  groups: [],
 };
+
 
 export const authReducer = (state = authState, action) => {
   switch (action.type) {
@@ -33,7 +35,14 @@ export const authReducer = (state = authState, action) => {
         role: action.payload.role,
         groups: action.payload.groups || [],
         isAuthenticated: true,
+        isHydrated: true,
       };
+    case 'FINISH_HYDRATION':
+      return {
+        ...state,
+        isHydrated: true,
+      };
+
     default:
       return state;
   }

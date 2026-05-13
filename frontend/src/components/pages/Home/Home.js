@@ -7,9 +7,9 @@ import RecentPostCard from '@/src/components/common/RecentPostCard';
 import TodayUpdate from '@/src/components/common/TodayUpdate';
 import useSWR from 'swr';
 import { BLOG_URL, FEATURED_BLOG_URL, BLOG_CATEGORIES_URL, BLOG_TAGS_URL } from '@/src/components/utils/urls';
-import axios from 'axios';
+import api from '@/src/components/utils/api';
 
-const fetcher = url => axios.get(url).then(res => res.data);
+const fetcher = url => api.get(url).then(res => res.data);
 
 const Home = (props) => {
   const router = useRouter();

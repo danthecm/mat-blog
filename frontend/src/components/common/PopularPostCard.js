@@ -1,12 +1,13 @@
 import React from "react";
 import Link from "next/link";
 import TagsList from "./TagsList";
+import { resolveImageUrl } from "@/src/components/utils/imageHelper";
 
 const PopularPostCard = ({ blog }) => {
   return (
     <div className="grid grid-cols-[1fr_2fr] gap-x-[25px] max-w-[90%] m-0 mb-6">
       <img 
-        src={blog.cover} 
+        src={resolveImageUrl(blog.cover)} 
         alt={blog.title} 
         className="w-[129px] h-[115px] bg-[#d9d9d9] rounded-[5px] object-cover" 
       />

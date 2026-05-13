@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { store } from '@/src/components/stateManagement/store';
 
 export const useRole = () => {
-  const { state: { role, groups, isAuthenticated, user } } = useContext(store);
+  const { state: { role, groups, isAuthenticated, isHydrated, user }, dispatch } = useContext(store);
 
   /**
    * Helper — use groups (new) with role as fallback (backward compat)
@@ -24,10 +24,13 @@ export const useRole = () => {
     role,
     groups,
     isAuthenticated,
+    isHydrated,
     user,
     inGroup,
     isAdmin,
     isEditor,
-    isContributor
+    isContributor,
+    dispatch,
   };
 };
+

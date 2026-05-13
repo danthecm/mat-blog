@@ -34,6 +34,7 @@ DJANGO_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
 ]
 
@@ -45,7 +46,6 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'tinymce',
     'cloudinary',
-    'cloudinary_storage',
     'guardian',
 ]
 
@@ -166,6 +166,23 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ─── Cloudinary Storage ───────────────────────────────────────────────────────
+# Default to Cloudinary for media files
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Compatibility for django-cloudinary-storage with Django 5.1+
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+# Modern Django 5.1+ Storage configuration
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+
 # ─── Third Party Integrations ─────────────────────────────────────────────────
 
 # Allow all origins in development; restrict to an explicit list in production.
@@ -185,9 +202,9 @@ else:
 SITE_URL = config('SITE_URL', default='http://localhost:3000')
 
 CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": config("CLOUD_NAME"),
-    "API_KEY": config("API_KEY"),
-    "API_SECRET": config("API_SECRET")
+    "CLOUD_NAME": config("CLOUD_NAME", default=""),
+    "API_KEY": config("API_KEY", default=""),
+    "API_SECRET": config("API_SECRET", default="")
 }
 
 REST_FRAMEWORK = {

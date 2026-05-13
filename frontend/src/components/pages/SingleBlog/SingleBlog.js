@@ -12,6 +12,8 @@ import AuthorInfo from '@/src/components/common/AuthorInfo';
 import Poll from '@/src/components/common/Poll';
 import { useRole } from '@/src/components/hooks/useRole';
 
+import { resolveImageUrl } from '@/src/components/utils/imageHelper';
+
 const SingleBlog = (props) => {
   const { user, isAuthenticated, isEditor } = useRole();
   const [fetching, setFetching] = useState(true);
@@ -45,11 +47,13 @@ const SingleBlog = (props) => {
   if (!activeBlog) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Blog not found</div>;
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-x-12 px-4 py-8 md:px-10 lg:px-28 lg:py-16 bg-main-bg">
-      <main>
-        <div className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100 mb-10">
+    <section className="grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-x-12 px-4 py-8 md:px-10 lg:px-16 lg:py-16 bg-main-bg overflow-x-hidden">
+      <main className="min-w-0">
+        <div className="bg-white p-6 md:p-12 rounded-2xl shadow-sm border border-gray-100 mb-10 overflow-hidden">
           <TagsList tags={activeBlog.tags} />
-          <h1 className="text-3xl md:text-5xl font-bold text-[#1e1e1e] mt-4 mb-6 font-poppins leading-tight">{activeBlog.title}</h1>
+          <h1 className="text-3xl md:text-5xl font-bold text-[#1e1e1e] mt-4 mb-6 font-poppins leading-tight break-words">
+            {activeBlog.title}
+          </h1>
           <AuthorInfo 
             authorName={activeBlog.author?.username} 
             dateTime={activeBlog.created_at} 
@@ -68,7 +72,7 @@ const SingleBlog = (props) => {
           )}
           
           <img 
-            src={activeBlog.cover} 
+            src={resolveImageUrl(activeBlog.cover)} 
             alt={activeBlog.title} 
             className="w-full h-auto max-h-[600px] rounded-2xl my-10 object-cover shadow-2xl border border-gray-100" 
           />
@@ -103,7 +107,7 @@ const SingleBlog = (props) => {
 
         <Comments blogId={activeBlog.id} />
       </main>
-      <aside>
+      <aside className="min-w-0">
         {/* Top Authors section disabled */}
 
 

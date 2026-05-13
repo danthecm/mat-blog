@@ -9,40 +9,28 @@ import api from '@/src/components/utils/api';
 import { useRole } from '@/src/components/hooks/useRole';
 
 const DashboardLayout = ({ children }) => {
-  const { user, role, groups, isAuthenticated, isAdmin, isEditor, dispatch } = useRole();
+  const { user, role, groups, isAuthenticated, isHydrated, isAdmin, isEditor, dispatch } = useRole();
+
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    if (!isHydrated) return; // Wait for global rehydration
+
+    if (!isAuthenticated) {
       const token = localStorage.getItem('access_token');
       if (!token) {
         router.push('/login');
-        return;
+      } else {
+        // This case shouldn't happen often if global rehydration worked,
+        // but if it failed or is still somehow false, we redirect.
+        router.push('/login');
       }
-      
-      if (!isAuthenticated) {
-        try {
-          const userRes = await api.get('users/me/');
-          dispatch({
-            type: 'SET_USER',
-            payload: {
-              user: userRes.data.username,
-              role: userRes.data.role,
-              groups: userRes.data.groups || [],
-            }
-          });
-        } catch (error) {
-          router.push('/login');
-          return;
-        }
-      }
+    } else {
       setLoading(false);
-    };
-    
-    checkAuth();
-  }, [isAuthenticated, router, dispatch]);
+    }
+  }, [isHydrated, isAuthenticated, router]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading dashboard...</div>;

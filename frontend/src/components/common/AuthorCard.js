@@ -1,5 +1,7 @@
 import React from "react";
 
+import { resolveImageUrl } from "@/src/components/utils/imageHelper";
+
 const AuthorCard = ({ author }) => {
   const avatar = author?.profile?.profile_picture || "https://clipground.com/images/img_avatar-png-2.png";
   const name = author?.username || "John Doe";
@@ -9,7 +11,7 @@ const AuthorCard = ({ author }) => {
     <div className="grid grid-cols-[120px_auto] my-[25px]">
       <div 
         className="w-[100px] h-[100px] rounded-full bg-[#d9d9d9] self-center bg-contain bg-center bg-no-repeat shadow-sm"
-        style={{ backgroundImage: `url("${avatar}")` }}
+        style={{ backgroundImage: `url("${resolveImageUrl(avatar)}")` }}
       ></div>
       <div>
         <h3 className="my-[5px] text-[20px] font-bold text-[#1e1e1e]">

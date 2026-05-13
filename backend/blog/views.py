@@ -158,8 +158,9 @@ class BlogViewSet(ModelViewSet):
         ).exists()
 
         if not already_viewed:
+            from django.db.models import F
             BlogViewModel.objects.create(blog=instance, ip=ip)
-            Blog.objects.filter(pk=instance.pk).update(view_count=instance.view_count + 1)
+            Blog.objects.filter(pk=instance.pk).update(view_count=F('view_count') + 1)
             instance.view_count += 1
 
         serializer = self.get_serializer(instance)

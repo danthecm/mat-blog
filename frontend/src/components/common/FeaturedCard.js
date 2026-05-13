@@ -1,7 +1,10 @@
 import React from "react";
 import Link from "next/link";
+import { resolveImageUrl } from "@/src/components/utils/imageHelper";
+
 import TagsList from "./TagsList";
 import AuthorInfo from "./AuthorInfo";
+
 
 const FeaturedCard = ({ blog }) => {
   if (!blog) return null;
@@ -18,7 +21,7 @@ const FeaturedCard = ({ blog }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-[25px] bg-white p-[2rem] mb-[1rem] rounded-[5px] shadow-[7px_7px_5px_#d9d9d9] border-[2px] border-[#f1f1f1]">
       <img 
-        src={blog.cover} 
+        src={resolveImageUrl(blog.cover)}
         alt="Blog Cover" 
         className="w-full aspect-[340/240] bg-[#d9d9d9] rounded-[7px] object-cover" 
       />

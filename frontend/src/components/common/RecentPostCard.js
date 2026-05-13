@@ -4,6 +4,8 @@ import React from "react";
 import Link from "next/link";
 import AuthorInfo from "./AuthorInfo";
 
+import { resolveImageUrl } from "@/src/components/utils/imageHelper";
+
 const RecentPostCard = ({ blogs, loading }) => {
   const removeTags = (str) => {
     if (!str) return "";
@@ -20,7 +22,7 @@ const RecentPostCard = ({ blogs, loading }) => {
         <div className="grid grid-cols-1 mb-[2.5rem]" key={blog.id}>
           <Link href={`/${blog.slug}`} className="block">
             <img 
-              src={blog.cover} 
+              src={resolveImageUrl(blog.cover)} 
               alt="Blog Cover" 
               className="w-full aspect-[400/250] bg-[#d9d9d9] rounded-[7px] mb-[1rem] object-cover" 
             />

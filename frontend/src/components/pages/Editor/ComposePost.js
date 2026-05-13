@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import RichTextEditor from './RichTextEditor';
 import api from '@/src/components/utils/api';
+import { resolveImageUrl } from '@/src/components/utils/imageHelper';
+
 
 const selectStyles = {
   control: (base, state) => ({
@@ -348,7 +350,8 @@ const ComposePost = () => {
           <div className={`relative w-full h-64 md:h-80 bg-gray-100 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 flex flex-col items-center justify-center ${blogStatus === 'pending' ? 'opacity-70' : ''}`}>
             {coverPreview ? (
               <>
-                <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
+                <img src={resolveImageUrl(coverPreview)} alt="Cover" className="w-full h-full object-cover" />
+
                 {blogStatus !== 'pending' && (
                   <label className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-primary px-4 py-2 rounded shadow-lg cursor-pointer font-bold hover:bg-white transition-all">
                     Change Photo
