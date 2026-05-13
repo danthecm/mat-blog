@@ -46,6 +46,7 @@ const DashboardLayout = ({ children }) => {
     },
     { name: 'Editor Inbox', path: '/dashboard/inbox',   show: isEditor },
     { name: 'Categories',   path: '/dashboard/categories', show: isEditor },
+    { name: 'User Management', path: '/dashboard/users', show: isAdmin },
     { name: 'My Profile',   path: `/author/${user}`,    show: true },
   ];
 

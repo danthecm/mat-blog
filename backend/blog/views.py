@@ -29,7 +29,7 @@ from .roles import is_admin, is_editor
 
 # These are imported here to avoid circular dependencies if needed, 
 # but usually views are safe to import at the top level.
-from engagement.models import BlogLike, Comment
+from engagement.models import BlogLike, Comment, NewsletterSubscriber
 
 
 def get_client_ip(request):
@@ -323,6 +323,17 @@ class BlogViewSet(ModelViewSet):
             .values('title', 'slug', 'view_count', 'author__username')[:5]
         )
 
+        # New Posts (published in last 7 days)
+        seven_days_ago = timezone.now() - timezone.timedelta(days=7)
+        new_posts_count = base_qs.filter(
+            status=BlogStatus.PUBLISHED,
+            published_at__gte=seven_days_ago
+        ).count()
+
+        # Platform-wide metrics (always total, even if ?mine=true)
+        total_visitors = BlogViewModel.objects.values('ip').distinct().count()
+        new_subscribers = NewsletterSubscriber.objects.filter(is_active=True).count()
+
         return Response({
             'scope': scope_label,
             'total_posts': agg['total'] or 0,
@@ -331,6 +342,9 @@ class BlogViewSet(ModelViewSet):
             'published': agg['published'] or 0,
             'total_views': agg['total_views'] or 0,
             'total_comments': comment_count,
+            'new_posts': new_posts_count,
+            'total_visitors': total_visitors,
+            'new_subscribers': new_subscribers,
             'top_posts': list(top_posts),
         })
 

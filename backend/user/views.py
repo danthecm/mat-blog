@@ -138,3 +138,18 @@ class ApproveContributorView(APIView):
 
         state = 'approved' if profile.is_approved else 'suspended'
         return Response({'message': f'{username} has been {state}.'})
+
+
+@extend_schema(tags=['users'])
+class UserListView(generics.ListAPIView):
+    """
+    List all users. **Admin only.**
+    """
+    queryset = User.objects.all().select_related('profile').order_by('-date_joined')
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if not is_admin(self.request.user):
+            return User.objects.none()
+        return super().get_queryset()

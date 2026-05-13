@@ -169,36 +169,40 @@ const DashboardHome = () => {
         </div>
       )}
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+      {/* Primary Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         <StatCard
-          label="Total Posts"
-          value={loading ? null : stats?.total_posts}
-          icon="📄"
-          color="border-primary"
-          sub="Including all statuses"
+          label="New Post"
+          value={loading ? null : stats?.new_posts}
+          icon="✨"
+          color="border-purple-500"
+          sub="Published this week"
         />
         <StatCard
-          label="Published"
-          value={loading ? null : stats?.published}
-          icon="✅"
-          color="border-green-400"
-          sub="Live on the site"
+          label="Total Visitors"
+          value={loading ? null : stats?.total_visitors}
+          icon="👥"
+          color="border-blue-500"
+          sub="Unique platform visits"
         />
         <StatCard
-          label="Total Views"
+          label="New Subscribers"
+          value={loading ? null : stats?.new_subscribers}
+          icon="📧"
+          color="border-pink-500"
+          sub="Newsletter community"
+        />
+        <StatCard
+          label="Blog Reads"
           value={loading ? null : stats?.total_views}
-          icon="👁️"
-          color="border-blue-400"
-          sub="Across published posts"
+          icon="📖"
+          color="border-orange-500"
+          sub="Total article views"
         />
-        <StatCard
-          label="Total Comments"
-          value={loading ? null : stats?.total_comments}
-          icon="💬"
-          color="border-indigo-400"
-          sub="Approved comments"
-        />
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <StatCard
           label="Drafts"
           value={loading ? null : stats?.drafts}
@@ -211,7 +215,14 @@ const DashboardHome = () => {
           value={loading ? null : stats?.pending}
           icon="⏳"
           color="border-yellow-400"
-          sub="Awaiting editorial approval"
+          sub="Awaiting approval"
+        />
+        <StatCard
+          label="Total Posts"
+          value={loading ? null : stats?.total_posts}
+          icon="📄"
+          color="border-primary"
+          sub="All-time content"
         />
       </div>
 

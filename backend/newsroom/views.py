@@ -111,8 +111,13 @@ class EditorInboxView(ListAPIView):
 
         show_all = self.request.query_params.get('all', 'false').lower() == 'true'
         if not show_all:
-            # Show all notifications for blogs that still need editorial action
-            qs = qs.filter(blog__status=BlogStatus.PENDING)
+            # Show only the LATEST notification for each blog that still needs editorial action.
+            # This prevents duplicates if a post was submitted, recalled, and resubmitted.
+            from django.db.models import Max
+            latest_ids = SubmissionNotification.objects.filter(
+                blog__status=BlogStatus.PENDING
+            ).values('blog').annotate(max_id=Max('id')).values_list('max_id', flat=True)
+            qs = qs.filter(id__in=latest_ids)
         return qs
 
     def list(self, request, *args, **kwargs):

@@ -7,6 +7,7 @@ from .views import (
     ContributorProfileView,
     UpdateUserRoleView,
     ApproveContributorView,
+    UserListView,
 )
 
 
@@ -34,6 +35,7 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshSchemaView.as_view(), name='auth-token-refresh'),
 
     # ── User profiles ───────────────────────────────────────────────────────
+    path('users/', UserListView.as_view(), name='user-list'),
     path('users/me/', UserMeView.as_view(), name='user-me'),
     path('users/<str:username>/', ContributorProfileView.as_view(), name='contributor-profile'),
     path('users/<str:username>/role/', UpdateUserRoleView.as_view(), name='user-role'),
