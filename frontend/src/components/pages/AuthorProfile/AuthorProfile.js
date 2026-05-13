@@ -55,7 +55,7 @@ const AuthorProfile = ({ username }) => {
         ...profile,
         first_name: firstName,
         last_name: lastName,
-        display_name: (firstName + " " + lastName).strip?.() || profile.username, // Fallback logic for UI sync
+        display_name: (firstName + " " + lastName).trim() || profile.username, // Fallback logic for UI sync
         profile: {
           ...profile.profile,
           bio,
@@ -70,10 +70,27 @@ const AuthorProfile = ({ username }) => {
         timer: 1500
       });
     } catch (err) {
+      let errorMessage = 'Could not update profile.';
+      if (err.response?.data) {
+        const data = err.response.data;
+        if (typeof data === 'object') {
+          // Flatten field errors: { field: ["error1", "error2"] } -> "Field: error1, error2"
+          errorMessage = Object.entries(data)
+            .map(([field, errors]) => {
+              const fieldName = field.charAt(0).toUpperCase() + field.slice(1).replace('_', ' ');
+              const message = Array.isArray(errors) ? errors.join(', ') : errors;
+              return `${fieldName}: ${message}`;
+            })
+            .join('\n');
+        } else if (typeof data === 'string') {
+          errorMessage = data;
+        }
+      }
+      
       Swal.fire({
         icon: 'error',
         title: 'Update Failed',
-        text: err.response?.data?.error || 'Could not update profile.'
+        text: errorMessage
       });
     } finally {
       setIsSaving(false);
@@ -97,9 +114,9 @@ const AuthorProfile = ({ username }) => {
 
         <div className="w-32 h-32 mx-auto bg-gray-200 rounded-full mb-6 flex items-center justify-center text-4xl text-gray-500 font-bold uppercase overflow-hidden border-4 border-gray-50">
           {profile.profile?.avatar ? (
-            <img src={profile.profile.avatar} alt={profile.username} className="w-full h-full object-cover" />
+            <img src={profile.profile.avatar} alt={profile.display_name || profile.username} className="w-full h-full object-cover" />
           ) : (
-            profile.username.charAt(0)
+            (profile.display_name || profile.username).charAt(0)
           )}
         </div>
 

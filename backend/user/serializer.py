@@ -19,13 +19,18 @@ class UserSerializer(serializers.ModelSerializer):
     )
     # Convenience computed string — highest-privilege role name
     role = serializers.SerializerMethodField()
+    display_name = serializers.SerializerMethodField()
 
     def get_role(self, obj):
         return get_primary_role(obj)
 
+    def get_display_name(self, obj):
+        full_name = f"{obj.first_name} {obj.last_name}".strip()
+        return full_name if full_name else obj.username
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'date_joined', 'profile', 'groups', 'role', 'is_active')
+        fields = ('id', 'username', 'first_name', 'last_name', 'display_name', 'email', 'date_joined', 'profile', 'groups', 'role', 'is_active')
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -54,8 +59,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
-    bio = serializers.CharField(source='profile.bio', required=False)
-    website = serializers.URLField(source='profile.website', required=False)
+    bio = serializers.CharField(source='profile.bio', required=False, allow_blank=True)
+    website = serializers.URLField(source='profile.website', required=False, allow_blank=True)
     avatar = serializers.ImageField(source='profile.avatar', required=False)
 
     class Meta:
