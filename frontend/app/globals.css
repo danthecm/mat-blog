@@ -53,6 +53,8 @@ img {
   color: #2d3748; /* Darker gray for better readability */
   line-height: 1.8;
   font-size: 1.125rem;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .blog-content h1,

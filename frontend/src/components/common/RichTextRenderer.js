@@ -18,7 +18,11 @@ const RichTextRenderer = ({ content, className = "" }) => {
     USE_PROFILES: { html: true },
   });
 
-  // 2. Options for html-react-parser to customize element rendering
+  // 2. Replace &nbsp; and literal non-breaking spaces (\u00A0) with regular spaces 
+  // to prevent layout overflow in paragraphs that use them instead of regular spaces.
+  const processedContent = sanitizedContent.replace(/&nbsp;|\u00A0/g, ' ');
+
+  // 3. Options for html-react-parser to customize element rendering
   const options = {
     replace: (domNode) => {
       // Handle images to ensure they use resolveImageUrl and have proper styling
@@ -68,7 +72,7 @@ const RichTextRenderer = ({ content, className = "" }) => {
 
   return (
     <div className={`blog-content prose prose-lg max-w-none ${className}`}>
-      {parse(sanitizedContent, options)}
+      {parse(processedContent, options)}
     </div>
   );
 };

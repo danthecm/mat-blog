@@ -69,7 +69,7 @@ const EditorInbox = () => {
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
                   <Link 
-                    href={`/${blog.slug}`} 
+                    href={`/preview/${blog.slug}`} 
                     target="_blank"
                     className="flex-1 text-center bg-gray-100 text-gray-700 px-4 py-2 rounded font-bold hover:bg-gray-200 transition-colors"
                   >

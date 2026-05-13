@@ -132,7 +132,7 @@ const MyDrafts = () => {
                     Edit
                   </Link>
                   <Link 
-                    href={`/${draft.slug}`}
+                    href={`/preview/${draft.slug}`}
                     target="_blank"
                     className="flex-1 text-center bg-primary text-white py-2 rounded text-sm font-bold hover:bg-[#008f87] transition-colors"
                   >
@@ -186,7 +186,14 @@ const MyDrafts = () => {
                     href={`/dashboard/compose?slug=${sub.slug}`}
                     className="flex-1 text-center bg-gray-100 py-2 rounded text-sm font-bold hover:bg-gray-200 transition-colors"
                   >
-                    View & Recall
+                    Edit
+                  </Link>
+                  <Link 
+                    href={`/preview/${sub.slug}`}
+                    target="_blank"
+                    className="flex-1 text-center bg-amber-500 text-white py-2 rounded text-sm font-bold hover:bg-amber-600 transition-colors"
+                  >
+                    Preview
                   </Link>
                   {/* Admins can trash pending submissions from any author */}
                   {isAdmin && (
@@ -237,11 +244,11 @@ const MyDrafts = () => {
                       Edit
                     </Link>
                     <Link 
-                      href={`/${p.slug}`}
+                      href={`/preview/${p.slug}`}
                       target="_blank"
                       className="flex-1 text-center bg-gray-100 py-2 rounded text-sm font-bold hover:bg-gray-200 transition-colors"
                     >
-                      View Live
+                      Preview
                     </Link>
                     <button 
                       onClick={() => handleDelete(p.slug)}

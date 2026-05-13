@@ -100,10 +100,20 @@ class BlogViewSet(ModelViewSet):
         if user.is_authenticated:
             if is_admin(user):
                 # Admins see everything (scoping done per-action)
+                # However, for the main LIST view (homepage), default to published unless status is requested
+                if self.action == 'list' and not self.request.query_params.get('status'):
+                    return qs.filter(status=BlogStatus.PUBLISHED).filter(
+                        Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True)
+                    )
                 return qs
 
             if is_editor(user):
                 # Editors see all published, all pending, and their own drafts
+                # For main LIST, default to published
+                if self.action == 'list' and not self.request.query_params.get('status'):
+                    return qs.filter(status=BlogStatus.PUBLISHED).filter(
+                        Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True)
+                    )
                 return qs.filter(
                     Q(status=BlogStatus.PUBLISHED) |
                     Q(status=BlogStatus.PENDING) |
@@ -111,6 +121,12 @@ class BlogViewSet(ModelViewSet):
                 )
 
             # Contributors: all published (and past date) + their own posts
+            # For main LIST, default to published
+            if self.action == 'list' and not self.request.query_params.get('status'):
+                return qs.filter(status=BlogStatus.PUBLISHED).filter(
+                    Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True)
+                )
+            
             return qs.filter(
                 (Q(status=BlogStatus.PUBLISHED) & (Q(published_at__lte=timezone.now()) | Q(published_at__isnull=True))) | 
                 Q(author=user)

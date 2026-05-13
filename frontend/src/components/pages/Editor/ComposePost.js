@@ -59,6 +59,7 @@ const createTagOnServer = async (label) => {
   return res.data.id;
 };
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { confirmModal, toast } from '@/src/components/utils/swal';
 
 const ComposePost = () => {
@@ -317,12 +318,23 @@ const ComposePost = () => {
           </span>
 
           {blogStatus !== 'pending' && (
-            <button 
-              onClick={handleSaveAndExit}
-              className="hidden sm:block bg-white text-primary border border-primary px-4 py-2 rounded-md font-bold hover:bg-gray-50 transition-colors"
-            >
-              Save & Return
-            </button>
+            <>
+              <button 
+                onClick={handleSaveAndExit}
+                className="hidden sm:block bg-white text-primary border border-primary px-4 py-2 rounded-md font-bold hover:bg-gray-50 transition-colors"
+              >
+                Save & Return
+              </button>
+              {slug && (
+                <Link 
+                  href={`/preview/${slug}`} 
+                  target="_blank"
+                  className="hidden sm:block bg-[#e8f3f3] text-primary px-4 py-2 rounded-md font-bold hover:bg-primary hover:text-white transition-all"
+                >
+                  <i className="fa-solid fa-eye mr-2"></i> Preview
+                </Link>
+              )}
+            </>
           )}
 
           {blogStatus === 'pending' ? (

@@ -15,7 +15,7 @@ import RichTextRenderer from '@/src/components/common/RichTextRenderer';
 
 import { resolveImageUrl } from '@/src/components/utils/imageHelper';
 
-const SingleBlog = (props) => {
+const SingleBlog = ({ isPreview = false, ...props }) => {
   const { user, isAuthenticated, isEditor } = useRole();
   const [fetching, setFetching] = useState(true);
   const [activeBlog, setActiveBlog] = useState(null);
@@ -25,7 +25,15 @@ const SingleBlog = (props) => {
     const fetchBlog = async () => {
       try {
         const res = await api.get(`blogs/${params.slug}/`);
-        setActiveBlog(res.data);
+        const blogData = res.data;
+
+        // Security check: If not in preview mode, ensure the blog is actually published.
+        // This prevents the normal /[slug] route from acting as a preview for authors/editors.
+        if (!isPreview && blogData.status !== 'published') {
+          setActiveBlog(null);
+        } else {
+          setActiveBlog(blogData);
+        }
       } catch (err) {
         console.error("Failed to fetch blog");
       } finally {
@@ -33,7 +41,7 @@ const SingleBlog = (props) => {
       }
     };
     if (params.slug) fetchBlog();
-  }, [params.slug]);
+  }, [params.slug, isPreview]);
 
   const handleLike = async () => {
     try {
@@ -48,12 +56,40 @@ const SingleBlog = (props) => {
   if (!activeBlog) return <div className="min-h-screen flex items-center justify-center font-bold text-red-500">Blog not found</div>;
 
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-x-12 px-4 py-8 md:px-10 lg:px-16 lg:py-16 bg-main-bg overflow-x-hidden">
-      <main className="min-w-0">
-        <article className="bg-white p-6 md:p-12 rounded-3xl shadow-sm border border-gray-100 mb-10 overflow-hidden">
+    <section className="relative grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-x-12 px-4 py-8 md:px-10 lg:px-16 lg:py-16 bg-main-bg overflow-x-hidden">
+      {isPreview && (
+        <>
+          {/* Watermark Overlay */}
+          <div className="fixed inset-0 pointer-events-none z-[9999] flex items-center justify-center overflow-hidden select-none">
+            <div className="text-[10vw] font-black text-gray-500/5 rotate-[-45deg] whitespace-nowrap uppercase tracking-tighter">
+              Preview Mode • Preview Mode • Preview Mode
+            </div>
+          </div>
+          
+          {/* Top Banner */}
+          <div className="fixed top-0 left-0 w-full bg-amber-500 text-white py-2 z-[10000] text-center font-bold shadow-md flex items-center justify-center gap-3">
+             <i className="fa-solid fa-eye text-lg"></i>
+             <span>You are viewing this post in Preview Mode. This version is not yet published to the public.</span>
+             <button 
+               onClick={() => window.close()} 
+               className="ml-4 bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-sm transition-colors"
+             >
+               Close Preview
+             </button>
+          </div>
+        </>
+      )}
+
+      <main className={`min-w-0 ${isPreview ? 'mt-10' : ''}`}>
+        <article className="bg-white p-6 md:p-12 rounded-3xl shadow-sm border border-gray-100 mb-10 overflow-hidden relative">
+          {isPreview && (
+            <div className="absolute top-0 right-0 bg-amber-100 text-amber-700 px-6 py-2 rounded-bl-3xl font-bold uppercase tracking-widest text-xs border-l border-b border-amber-200">
+              Preview
+            </div>
+          )}
           <header>
             <TagsList tags={activeBlog.tags} />
-            <h1 className="text-3xl md:text-5xl font-extrabold text-[#1a202c] mt-6 mb-8 font-poppins leading-tight tracking-tight">
+            <h1 className="text-3xl md:text-5xl font-extrabold text-[#1a202c] mt-6 mb-8 font-poppins leading-tight tracking-tight break-words">
               {activeBlog.title}
             </h1>
             <AuthorInfo 
