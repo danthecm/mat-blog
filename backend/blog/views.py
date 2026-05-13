@@ -370,7 +370,7 @@ class BlogCategoryViewSet(ModelViewSet):
         """Read is public; write (create/update/delete) requires editor or admin."""
         if self.action in ('list', 'retrieve'):
             return [AllowAny()]
-        return [IsEditorOrHigher()]
+        return [IsAdminRole()]
 
 
 # ─── Tags ─────────────────────────────────────────────────────────────────────

@@ -120,8 +120,8 @@ class ApproveContributorView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, username):
-        if not is_editor(request.user):
-            return Response({'error': 'Only editors and admins can approve contributors.'}, status=status.HTTP_403_FORBIDDEN)
+        if not is_admin(request.user):
+            return Response({'error': 'Only admins can approve contributors.'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             target = User.objects.get(username=username)

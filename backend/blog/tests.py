@@ -42,7 +42,8 @@ class BlogListTests(APITestCase):
         create_blog(self.editor, title='Editor Own Draft', status=BlogStatus.DRAFT)
         
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
-        r = self.client.get('/blogs/')
+        # Use status=all to see pending and own drafts in the list view
+        r = self.client.get('/blogs/?status=all')
         titles = [b['title'] for b in r.data['results']]
         
         self.assertIn('Published Post', titles)
@@ -64,7 +65,8 @@ class BlogListTests(APITestCase):
     def test_editor_can_filter_by_author(self):
         # Admin/Editor wants to see only their stuff in 'My Drafts' page
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
-        r = self.client.get(f'/blogs/?author__username={self.contributor.username}')
+        # Use status=all to ensure pending posts are included in the search
+        r = self.client.get(f'/blogs/?author__username={self.contributor.username}&status=all')
         titles = [b['title'] for b in r.data['results']]
         
         # Should see contributor's published and pending posts, but NOT their drafts
@@ -349,11 +351,17 @@ class BlogCategoryTests(APITestCase):
         r = self.client.post('/blog-categories/', {'name': 'Arts'}, format='json')
         self.assertEqual(r.status_code, 401)
 
-    def test_create_category_authenticated_success(self):
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
+    def test_create_category_admin_success(self):
+        admin = create_user('cat_admin', role='admin')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(admin)}')
         r = self.client.post('/blog-categories/', {'name': 'Culture', 'slug': 'culture'}, format='json')
         self.assertEqual(r.status_code, 201)
         self.assertEqual(r.data['name'], 'Culture')
+
+    def test_create_category_editor_forbidden(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
+        r = self.client.post('/blog-categories/', {'name': 'Forbidden Cat'}, format='json')
+        self.assertEqual(r.status_code, 403)
 
     def test_retrieve_category_by_slug(self):
         r = self.client.get('/blog-categories/science/')

@@ -26,7 +26,7 @@ class RegistrationTests(APITestCase):
         user = User.objects.get(username='bob')
         self.assertEqual(user.profile.role, 'contributor')
         self.assertEqual(user.profile.bio, 'Writer')
-        self.assertTrue(user.profile.is_approved)
+        self.assertFalse(user.profile.is_approved)
 
     def test_register_duplicate_username_returns_400(self):
         create_user('alice2')
@@ -196,23 +196,38 @@ class RoleManagementTests(APITestCase):
 # ─── RBAC — Contributor Approval ─────────────────────────────────────────────
 
 class ContributorApprovalTests(APITestCase):
+    """
+    As of Phase 5, ONLY admins can approve/suspend users.
+    Editors are restricted to editorial work and no longer have administrative perms.
+    """
 
     def setUp(self):
+        self.admin = create_user('appr_admin', role='admin')
         self.editor = create_user('appr_editor', role='editor')
         self.contributor = create_user('appr_contrib', role='contributor')
 
-    def test_editor_can_approve_contributor(self):
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
+    def test_admin_can_approve_contributor(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.admin)}')
         r = self.client.patch('/users/appr_contrib/approve/', {'is_approved': True}, format='json')
         self.assertEqual(r.status_code, 200)
         self.assertIn('approved', r.data['message'])
 
-    def test_editor_can_suspend_contributor(self):
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
+    def test_admin_can_suspend_contributor(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.admin)}')
         r = self.client.patch('/users/appr_contrib/approve/', {'is_approved': False}, format='json')
         self.assertEqual(r.status_code, 200)
         self.contributor.profile.refresh_from_db()
         self.assertFalse(self.contributor.profile.is_approved)
+
+    def test_editor_cannot_approve_contributor(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
+        r = self.client.patch('/users/appr_contrib/approve/', {'is_approved': True}, format='json')
+        self.assertEqual(r.status_code, 403)
+
+    def test_editor_cannot_suspend_contributor(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.editor)}')
+        r = self.client.patch('/users/appr_contrib/approve/', {'is_approved': False}, format='json')
+        self.assertEqual(r.status_code, 403)
 
     def test_contributor_cannot_approve_others(self):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {get_token(self.contributor)}')

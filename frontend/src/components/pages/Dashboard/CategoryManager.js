@@ -1,13 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { store } from '@/src/components/stateManagement/store';
+import { useContext } from 'react';
 import api from '@/src/components/utils/api';
 import { toast, confirmModal } from '@/src/components/utils/swal';
 import LoadingSpinner from '@/src/components/common/LoadingSpinner';
 
 const CategoryManager = () => {
+  const { state: { role, groups } } = useContext(store);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const inGroup = (...names) => {
+    if (Array.isArray(groups) && groups.length > 0) return names.some(n => groups.includes(n));
+    return role ? names.includes(role) : false;
+  };
+  const isAdmin = inGroup('admin');
   
   // Form state
   const [name, setName] = useState('');
@@ -58,6 +67,15 @@ const CategoryManager = () => {
       toast.error('Failed to delete category');
     }
   };
+
+  if (!isAdmin) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-lg text-center">
+        <h2 className="text-xl font-bold mb-2">Access Denied</h2>
+        <p>You do not have permission to manage categories. This section is restricted to administrators.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 lg:p-8">
