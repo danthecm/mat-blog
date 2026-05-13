@@ -10,11 +10,13 @@ import { BLOG_URL, FEATURED_BLOG_URL, BLOG_CATEGORIES_URL, BLOG_TAGS_URL } from 
 import api from '@/src/components/utils/api';
 
 import LoadingSpinner from '@/src/components/common/LoadingSpinner';
+import { useRole } from '@/src/components/hooks/useRole';
 
 const fetcher = url => api.get(url).then(res => res.data);
 
 const Home = (props) => {
   const router = useRouter();
+  const { isAdmin } = useRole();
   const [page, setPage] = useState(1);
   const { data: featuredRes } = useSWR(FEATURED_BLOG_URL, fetcher);
   const { data: recentRes, error: recentError, isLoading: recentLoading } = useSWR(`${BLOG_URL}?page=${page}`, fetcher);
@@ -95,10 +97,14 @@ const Home = (props) => {
             ))}
           </div>
 
-          <h3 className="mb-[40px] text-2xl font-bold font-poppins">
-            <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0 mr-2">Today's</span> Update
-          </h3>
-          <TodayUpdate />
+          {isAdmin && (
+            <>
+              <h3 className="mb-[40px] text-2xl font-bold font-poppins">
+                <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0 mr-2">Today's</span> Update
+              </h3>
+              <TodayUpdate />
+            </>
+          )}
 
           <h3 className="mb-[40px] text-2xl font-bold font-poppins">
             <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0 mr-2 hover:text-white">Search</span> With Tags
