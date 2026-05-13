@@ -11,14 +11,17 @@ const PopularBlogList = () => {
     const topBlogs = Array.isArray(data) ? data : (data?.results || []);
 
     return (
-        <div className="grid grid-cols-[auto] h-[700px] m-0">
-            <h3 className="mb-[2rem] font-bold text-[clamp(1.1rem,2.5vw+0.5rem,2.2rem)] font-poppins">
-                <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0 mr-2">Popular</span> Posted
+        <div className="flex flex-col m-0 min-h-[500px]">
+            <h3 className="mb-[1.5rem] font-bold text-[clamp(1.1rem,2.5vw+0.5rem,1.8rem)] font-poppins">
+                <span className="bg-primary text-white px-2 rounded mr-2">Popular</span> Posted
             </h3>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-4">
                 {!isLoading && topBlogs.map((blog) => (
                     <PopularPostCard key={blog.id} blog={blog} />
                 ))}
+                {topBlogs.length === 0 && !isLoading && (
+                    <p className="text-gray-400 italic">No popular posts yet.</p>
+                )}
             </div>
         </div>
     );

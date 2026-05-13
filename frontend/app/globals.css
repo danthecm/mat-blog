@@ -47,3 +47,32 @@ img {
   background-color: #d9d9d9;
   border-radius: 10px;
 }
+
+/* Prose (Tailwind Typography) Overrides & Safety */
+.prose {
+  max-width: 100% !important;
+  overflow-x: hidden;
+}
+
+.prose * {
+  max-width: 100% !important;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  box-sizing: border-box !important;
+}
+
+.prose img {
+  height: auto !important;
+  border-radius: 1rem;
+}
+
+.prose pre, .prose code {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+}
+
+.prose table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+}

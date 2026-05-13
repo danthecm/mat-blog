@@ -49,7 +49,7 @@ const SingleBlog = (props) => {
   return (
     <section className="grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-x-12 px-4 py-8 md:px-10 lg:px-16 lg:py-16 bg-main-bg overflow-x-hidden">
       <main className="min-w-0">
-        <div className="bg-white p-6 md:p-12 rounded-2xl shadow-sm border border-gray-100 mb-10 overflow-hidden">
+        <div className="bg-white p-6 md:p-12 rounded-2xl shadow-sm border border-gray-100 mb-10">
           <TagsList tags={activeBlog.tags} />
           <h1 className="text-3xl md:text-5xl font-bold text-[#1e1e1e] mt-4 mb-6 font-poppins leading-tight break-words">
             {activeBlog.title}
@@ -78,7 +78,7 @@ const SingleBlog = (props) => {
           />
 
           <div 
-            className="prose prose-lg max-w-none text-gray-800 leading-relaxed mb-12"
+            className="prose prose-lg max-w-none text-gray-800 leading-relaxed mb-12 break-normal w-full"
             dangerouslySetInnerHTML={{ __html: activeBlog.content }} 
           />
           

@@ -140,3 +140,5 @@ class BlogComment(DateAbstract):
 
     def __str__(self):
         return f'{self.blog.title} — {self.name}'
+
+

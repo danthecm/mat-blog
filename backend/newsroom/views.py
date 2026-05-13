@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
+from django.utils.dateparse import parse_datetime
 
 from blog.models import Blog, BlogStatus
 from blog.permissions import IsEditorOrHigher
@@ -149,7 +150,6 @@ class PublishBlogView(APIView):
         scheduled_at = request.data.get('published_at')
         if scheduled_at:
             try:
-                from django.utils.dateparse import parse_datetime
                 pub_time = parse_datetime(scheduled_at)
                 if not pub_time:
                     raise ValueError

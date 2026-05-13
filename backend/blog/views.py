@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F, Sum, Count as DCount
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.pagination import PageNumberPagination
@@ -17,6 +17,7 @@ from rest_framework.decorators import action
 from PIL import Image, ImageDraw, ImageFont
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiResponse
 from drf_spectacular.types import OpenApiTypes
+from guardian.shortcuts import assign_perm, remove_perm
 
 from .models import Blog, BlogCategory, BlogTag, BlogComment, BlogView as BlogViewModel, BlogStatus
 from .serializer import (
@@ -25,6 +26,10 @@ from .serializer import (
 )
 from .permissions import IsEditorOrHigher, IsAuthorOrEditorOrReadOnly, IsApprovedContributor, IsAdminRole
 from .roles import is_admin, is_editor
+
+# These are imported here to avoid circular dependencies if needed, 
+# but usually views are safe to import at the top level.
+from engagement.models import BlogLike, Comment
 
 
 def get_client_ip(request):
@@ -126,7 +131,6 @@ class BlogViewSet(ModelViewSet):
         return Response({'message': 'Post moved to trash.'}, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
-        from guardian.shortcuts import assign_perm
         instance = serializer.save(author=self.request.user)
         # Grant author object-level permissions on their own post.
         # These can be revoked individually (e.g., remove change_blog on submit).
@@ -134,7 +138,6 @@ class BlogViewSet(ModelViewSet):
         assign_perm('blog.delete_blog', self.request.user, instance)
 
     def perform_update(self, serializer):
-        from guardian.shortcuts import remove_perm
         instance = serializer.save()
         
         # Defense in Depth: Revoke author's object-level permissions if NOT in draft.
@@ -158,7 +161,6 @@ class BlogViewSet(ModelViewSet):
         ).exists()
 
         if not already_viewed:
-            from django.db.models import F
             BlogViewModel.objects.create(blog=instance, ip=ip)
             Blog.objects.filter(pk=instance.pk).update(view_count=F('view_count') + 1)
             instance.view_count += 1
@@ -169,7 +171,6 @@ class BlogViewSet(ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def like(self, request, slug=None):
         """POST /blogs/<slug>/like/ - Toggle like on a blog post."""
-        from engagement.models import BlogLike
         instance = self.get_object()
         ip = get_client_ip(request)
         user = request.user if request.user.is_authenticated else None
@@ -273,9 +274,6 @@ class BlogViewSet(ModelViewSet):
         - Admins: platform-wide stats. Add ?mine=true to scope to their own posts.
         - Editors/Contributors: always their own posts only.
         """
-        from django.db.models import Sum
-        from engagement.models import Comment
-
         mine_only = request.query_params.get('mine', 'false').lower() == 'true'
         _is_admin = is_admin(request.user)
 
@@ -288,7 +286,6 @@ class BlogViewSet(ModelViewSet):
             scope_label = 'mine'
 
         # Aggregate counts per status + totals
-        from django.db.models import Count as DCount
         agg = base_qs.aggregate(
             total=DCount('id'),
             drafts=DCount('id', filter=Q(status=BlogStatus.DRAFT)),
@@ -413,7 +410,6 @@ class TopBlogView(ListAPIView):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        from django.db.models import F
         return Blog.objects.filter(
             status=BlogStatus.PUBLISHED, 
             published_at__lte=timezone.now()
