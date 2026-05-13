@@ -14,13 +14,13 @@ const PopularPostCard = ({ blog }) => {
       <div className="flex flex-col justify-center">
         <TagsList tags={blog.tags} />
         <Link href={`/${blog.slug}`}>
-          <p className="text-[16px] font-[500] text-[#1e1e1e] hover:text-[#00aaa1] transition-colors line-clamp-2">
+          <p className="text-[14px] font-[500] text-[#1e1e1e] hover:text-[#00aaa1] transition-colors line-clamp-2">
             {blog.title}
           </p>
         </Link>
-        <div className="text-[12px] text-[#777777] mt-[10px]">
+        <div className="text-[10px] text-[#777777] mt-[10px]">
           <p className="uppercase tracking-wide font-bold">
-            {blog.author?.username || 'Unknown'} | 5 MINS READ
+            {blog.author?.username || 'Unknown'} | {blog.read_time || 1} MIN{blog.read_time !== 1 ? 'S' : ''} READ
           </p>
         </div>
       </div>

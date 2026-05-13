@@ -27,7 +27,7 @@ const RecentPostCard = ({ blogs, loading }) => {
               alt="Blog Cover" 
               className="w-full aspect-[400/250] bg-[#d9d9d9] rounded-[7px] mb-[1rem] object-cover" 
             />
-            <h2 className="mb-[1rem] font-bold text-[clamp(1.1rem,2.5vw+0.5rem,2.2rem)] font-poppins text-[#1e1e1e]">
+            <h2 className="mb-[1rem] font-bold text-[clamp(1rem,2vw+0.5rem,1.8rem)] font-poppins text-[#1e1e1e]">
               {blog.title}
             </h2>
             <AuthorInfo

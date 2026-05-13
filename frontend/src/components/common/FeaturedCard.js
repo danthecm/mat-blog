@@ -29,7 +29,7 @@ const FeaturedCard = ({ blog }) => {
         <div className="mb-[5px]">
           <TagsList tags={blog.tags} />
         </div>
-        <h2 className="font-bolder text-[#222222] font-poppins text-2xl mb-1 line-clamp-2">
+        <h2 className="font-bolder text-[#222222] font-poppins text-xl mb-1 line-clamp-2">
           {blog.title}
         </h2>
         <AuthorInfo

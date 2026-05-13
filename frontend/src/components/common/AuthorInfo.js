@@ -13,7 +13,7 @@ const AuthorInfo = ({ authorName, dateTime, content }) => {
   const readingTime = calculateReadingTime(content);
 
   return (
-    <div className="text-[12px] text-[#777777] mb-[15px] flex items-center gap-1 uppercase font-bold tracking-wider">
+    <div className="text-[10px] text-[#777777] mb-[15px] flex items-center gap-1 uppercase font-bold tracking-wider">
       <p className="flex items-center">
         <i className="fa-regular fa-user text-[#666666] mx-[5px]"></i> {authorName} 
       </p>
