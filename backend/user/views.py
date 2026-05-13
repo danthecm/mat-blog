@@ -131,5 +131,10 @@ class ApproveContributorView(APIView):
         profile, _ = UserProfile.objects.get_or_create(user=target)
         profile.is_approved = request.data.get('is_approved', True)
         profile.save()
+
+        # Sync with Django User.is_active to control login ability
+        target.is_active = profile.is_approved
+        target.save()
+
         state = 'approved' if profile.is_approved else 'suspended'
         return Response({'message': f'{username} has been {state}.'})

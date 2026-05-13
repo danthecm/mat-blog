@@ -44,6 +44,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         user = User(**validated_data)
         user.set_password(password)
+        user.is_active = False  # New users require admin approval
         user.save()
         UserProfile.objects.create(user=user, bio=bio, website=website)
         # All new users start as contributors — assign Group so permission checks work

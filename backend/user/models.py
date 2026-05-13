@@ -14,7 +14,7 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True, default='')
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     website = models.URLField(blank=True, default='')
-    is_approved = models.BooleanField(default=True)  # editors can approve/suspend contributors
+    is_approved = models.BooleanField(default=False)  # editors can approve/suspend contributors
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
