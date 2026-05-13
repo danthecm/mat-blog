@@ -14,6 +14,8 @@ const AuthorProfile = ({ username }) => {
   
   // Edit states
   const [isEditing, setIsEditing] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [bio, setBio] = useState('');
   const [website, setWebsite] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -25,6 +27,8 @@ const AuthorProfile = ({ username }) => {
       try {
         const res = await api.get(`users/${username}/`);
         setProfile(res.data);
+        setFirstName(res.data.first_name || '');
+        setLastName(res.data.last_name || '');
         setBio(res.data.profile?.bio || '');
         setWebsite(res.data.profile?.website || '');
       } catch (err) {
@@ -41,9 +45,17 @@ const AuthorProfile = ({ username }) => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await api.patch('users/me/', { bio, website });
+      await api.patch('users/me/', { 
+        first_name: firstName, 
+        last_name: lastName, 
+        bio, 
+        website 
+      });
       setProfile({
         ...profile,
+        first_name: firstName,
+        last_name: lastName,
+        display_name: (firstName + " " + lastName).strip?.() || profile.username, // Fallback logic for UI sync
         profile: {
           ...profile.profile,
           bio,
@@ -91,11 +103,33 @@ const AuthorProfile = ({ username }) => {
           )}
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{profile.username}</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{profile.display_name || profile.username}</h1>
         <p className="text-sm font-bold text-primary uppercase tracking-wider mb-6">{profile.role}</p>
         
         {isEditing ? (
           <div className="max-w-2xl mx-auto text-left space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">First Name</label>
+                <input 
+                  type="text"
+                  className="w-full p-3 border rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First Name"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Last Name</label>
+                <input 
+                  type="text"
+                  className="w-full p-3 border rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last Name"
+                />
+              </div>
+            </div>
             <div>
               <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Bio</label>
               <textarea 
@@ -160,7 +194,7 @@ const AuthorProfile = ({ username }) => {
 
       <div className="mt-16">
         <h2 className="text-2xl font-bold text-gray-900 mb-8 border-b pb-4">
-          Posts by <span className="text-primary">{profile.username}</span>
+          Posts by <span className="text-primary">{profile.display_name || profile.username}</span>
         </h2>
         <AuthorPosts username={profile.username} />
       </div>

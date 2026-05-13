@@ -95,7 +95,7 @@ const SingleBlog = ({ isPreview = false, ...props }) => {
               {activeBlog.title}
             </h1>
             <AuthorInfo 
-              authorName={activeBlog.author?.username} 
+              authorName={activeBlog.author?.display_name || activeBlog.author?.username} 
               dateTime={activeBlog.created_at} 
               content={activeBlog.content}
             />

@@ -38,9 +38,9 @@ const TrendingSection = () => {
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-6 h-6 bg-[#d1e7e5] text-primary rounded-full flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
-                  {blog.author?.username?.charAt(0) || 'U'}
+                  {(blog.author?.display_name || blog.author?.username || 'U').charAt(0)}
                 </div>
-                <span className="text-xs font-bold text-gray-900 hover:underline">{blog.author?.username}</span>
+                <span className="text-xs font-bold text-gray-900 hover:underline">{blog.author?.display_name || blog.author?.username}</span>
               </div>
               <h3 className="font-bold text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 font-poppins">
                 {blog.title}

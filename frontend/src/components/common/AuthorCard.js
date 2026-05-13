@@ -4,7 +4,7 @@ import { resolveImageUrl } from "@/src/components/utils/imageHelper";
 
 const AuthorCard = ({ author }) => {
   const avatar = author?.profile?.profile_picture || "https://clipground.com/images/img_avatar-png-2.png";
-  const name = author?.username || "John Doe";
+  const name = author?.display_name || author?.username || "John Doe";
   const bio = author?.profile?.bio || "Fashion Designer, Full Stack Developer";
 
   return (

@@ -31,6 +31,7 @@ const Login = () => {
         type: 'LOGIN_SUCCESS',
         payload: {
           user: userRes.data.username,
+          display_name: userRes.data.display_name,
           accessToken: access,
           role: userRes.data.role,             // computed top-level role string
           groups: userRes.data.groups || [],   // primary source of truth for permissions

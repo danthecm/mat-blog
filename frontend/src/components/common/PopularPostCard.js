@@ -20,7 +20,7 @@ const PopularPostCard = ({ blog }) => {
         </Link>
         <div className="text-[10px] text-[#777777] mt-[10px]">
           <p className="uppercase tracking-wide font-bold">
-            {blog.author?.username || 'Unknown'} | {blog.read_time || 1} MIN{blog.read_time !== 1 ? 'S' : ''} READ
+            {blog.author?.display_name || blog.author?.username || 'Unknown'} | {blog.read_time || 1} MIN{blog.read_time !== 1 ? 'S' : ''} READ
           </p>
         </div>
       </div>

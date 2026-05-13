@@ -76,7 +76,7 @@ const TopPostsTable = ({ posts, isAdmin }) => {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const DashboardHome = () => {
-  const { state: { user, role, groups } } = useContext(store);
+  const { state: { user, display_name, role, groups } } = useContext(store);
 
   // Groups are the primary source of truth; role is kept for display
   const inGroup = (...names) => {
@@ -129,7 +129,7 @@ const DashboardHome = () => {
             {isAdmin ? '📊 Platform Overview' : '📝 My Dashboard'}
           </h1>
           <p className="text-gray-500 mt-1 text-sm">
-            Welcome back, <span className="font-bold text-gray-700">{user}</span>
+            Welcome back, <span className="font-bold text-gray-700">{display_name || user}</span>
             {' · '}
             <span className="capitalize text-primary font-semibold">{role}</span>
           </p>

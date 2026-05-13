@@ -33,7 +33,7 @@ const FeaturedCard = ({ blog }) => {
           {blog.title}
         </h2>
         <AuthorInfo
-          authorName={blog.author?.username}
+          authorName={blog.author?.display_name || blog.author?.username}
           dateTime={blog.created_at}
           content={text}
         />

@@ -1,5 +1,6 @@
 export const authState = {
   user: null,
+  display_name: null,
   accessToken: null,
   isAuthenticated: false,
   isHydrated: false, // Track if we've checked localStorage on mount
@@ -14,6 +15,7 @@ export const authReducer = (state = authState, action) => {
       return {
         ...state,
         user: action.payload.user,
+        display_name: action.payload.display_name,
         accessToken: action.payload.accessToken,
         isAuthenticated: true,
         role: action.payload.role,
@@ -32,6 +34,7 @@ export const authReducer = (state = authState, action) => {
       return {
         ...state,
         user: action.payload.user,
+        display_name: action.payload.display_name,
         role: action.payload.role,
         groups: action.payload.groups || [],
         isAuthenticated: true,

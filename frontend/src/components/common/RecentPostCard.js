@@ -31,7 +31,7 @@ const RecentPostCard = ({ blogs, loading }) => {
               {blog.title}
             </h2>
             <AuthorInfo
-              authorName={blog.author?.username || 'Unknown'}
+              authorName={blog.author?.display_name || blog.author?.username || 'Unknown'}
               dateTime={blog.created_at}
               content={removeTags(blog.content)}
             />
