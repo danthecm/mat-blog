@@ -10,7 +10,6 @@ import { confirmModal, toast } from '@/src/components/utils/swal';
 const MyDrafts = () => {
   const [drafts, setDrafts] = useState([]);
   const [submissions, setSubmissions] = useState([]);
-  const [published, setPublished] = useState([]);
   const [trash, setTrash] = useState([]);
   const [loading, setLoading] = useState(true);
   const { state: { user, role, groups } } = useContext(store);
@@ -30,7 +29,6 @@ const MyDrafts = () => {
       ];
 
       if (isAdmin) {
-        endpoints.push(api.get('/blogs/all_published/'));
         endpoints.push(api.get('/blogs/trash/'));
       }
 
@@ -40,8 +38,7 @@ const MyDrafts = () => {
       setSubmissions(results[1].data.results || results[1].data);
       
       if (isAdmin) {
-        setPublished(results[2].data.results || results[2].data);
-        setTrash(results[3].data.results || results[3].data);
+        setTrash(results[2].data.results || results[2].data);
       }
     } catch (err) {
       console.error("Failed to fetch blog data");
@@ -211,59 +208,6 @@ const MyDrafts = () => {
           </div>
         )}
       </section>
-      {/* Admin Only: Published Posts */}
-      {isAdmin && (
-        <section className="bg-white rounded-lg shadow-sm p-6 lg:p-8">
-          <div className="flex justify-between items-center mb-6 border-b pb-4">
-            <h1 className="text-2xl font-bold text-green-700 font-poppins">Published Management</h1>
-          </div>
-          
-          {published.length === 0 ? (
-            <div className="text-center py-10 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">No published posts found.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {published.map((p) => (
-                <div key={p.slug} className="border border-green-200 bg-green-50/10 rounded-lg overflow-hidden flex flex-col">
-                  <div className="p-5 flex-1">
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-bold px-2 py-1 rounded uppercase tracking-wide bg-green-100 text-green-800">
-                        Published
-                      </span>
-                      <p className="text-xs text-gray-500">{new Date(p.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <h3 className="font-bold text-lg mb-2 line-clamp-2">{p.title}</h3>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase">Author: {p.author?.username}</p>
-                  </div>
-                  <div className="bg-white p-3 border-t border-gray-200 flex gap-2">
-                    <Link 
-                      href={`/dashboard/compose?slug=${p.slug}`}
-                      className="flex-1 text-center bg-white border border-gray-300 py-2 rounded text-sm font-bold hover:bg-gray-100 transition-colors"
-                    >
-                      Edit
-                    </Link>
-                    <Link 
-                      href={`/preview/${p.slug}`}
-                      target="_blank"
-                      className="flex-1 text-center bg-gray-100 py-2 rounded text-sm font-bold hover:bg-gray-200 transition-colors"
-                    >
-                      Preview
-                    </Link>
-                    <button 
-                      onClick={() => handleDelete(p.slug)}
-                      className="px-3 bg-red-50 text-red-600 border border-red-200 rounded hover:bg-red-100 transition-colors"
-                      title="Move to Trash"
-                    >
-                      <i className="fa-solid fa-trash"></i>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
 
       {/* Admin Only: Trash Section */}
       {isAdmin && (

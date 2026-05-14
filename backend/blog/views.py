@@ -244,7 +244,7 @@ class BlogViewSet(ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, IsAdminRole])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, IsEditorOrHigher])
     def all_published(self, request):
         """GET /blogs/all_published/ - Admin only: see all published posts for management."""
         qs = Blog.objects.filter(status=BlogStatus.PUBLISHED, is_deleted=False)

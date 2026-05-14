@@ -40,10 +40,11 @@ const DashboardLayout = ({ children }) => {
     { name: 'Dashboard',    path: '/dashboard',         show: true },
     { name: 'Write a Post', path: '/dashboard/compose', show: true },
     { 
-      name: isAdmin ? 'Content Manager' : 'My Drafts', 
+      name: 'My Drafts', 
       path: '/dashboard/drafts', 
       show: true 
     },
+    { name: 'Published Posts', path: '/dashboard/published', show: isEditor },
     { name: 'Editor Inbox', path: '/dashboard/inbox',   show: isEditor },
     { name: 'Categories',   path: '/dashboard/categories', show: isAdmin },
     { name: 'User Management', path: '/dashboard/users', show: isAdmin },
