@@ -43,6 +43,7 @@ const StateProvider = ({ children }) => {
             payload: {
               user: userRes.data.username,
               display_name: userRes.data.display_name,
+              avatar: userRes.data.profile?.avatar,
               role: userRes.data.role,
               groups: userRes.data.groups || [],
             }
