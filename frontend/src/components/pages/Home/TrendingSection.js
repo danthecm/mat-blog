@@ -45,11 +45,11 @@ const TrendingSection = () => {
               <h3 className="font-bold text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 font-poppins">
                 {blog.title}
               </h3>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-2">
+              <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-2">
                 {new Date(blog.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} 
                 <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                 5 min read
-              </p>
+              </span>
             </div>
           </Link>
         ))}

@@ -45,7 +45,7 @@ const Footer = () => {
             </p>
             <div className="flex items-center gap-3">
               <SocialLink href="#" icon="fa-facebook-f" color="hover:bg-[#1877F2]" />
-              <SocialLink href="#" icon="fa-x-twitter" color="hover:bg-[#000000]" />
+              <SocialLink href="#" icon="fa-x" color="hover:bg-[#000000]" />
               <SocialLink href="#" icon="fa-instagram" color="hover:bg-[#E4405F]" />
               <SocialLink href="#" icon="fa-linkedin-in" color="hover:bg-[#0A66C2]" />
             </div>
