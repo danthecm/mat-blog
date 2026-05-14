@@ -1,72 +1,118 @@
 import React from "react";
+import Link from "next/link";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
+  const FooterLink = ({ href, children, icon }) => (
+    <li>
+      <Link 
+        href={href} 
+        className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors duration-300 py-1.5 group"
+      >
+        {icon && <i className={`fa-solid ${icon} text-xs opacity-50 group-hover:opacity-100 transition-opacity`}></i>}
+        <span className="text-[15px]">{children}</span>
+      </Link>
+    </li>
+  );
+
+  const SocialLink = ({ href, icon, color }) => (
+    <a 
+      href={href} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className={`w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm text-gray-500 transition-all duration-300 hover:scale-110 hover:text-white ${color}`}
+    >
+      <i className={`fa-brands ${icon} text-lg`}></i>
+    </a>
+  );
+
   return (
-    <footer className="grid grid-cols-1 items-center justify-center bg-[#f2f8f7]">
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_5fr] gap-y-10 lg:gap-y-0 lg:gap-x-[110px] px-6 py-8 md:px-8 md:py-12 lg:px-16 lg:py-20">
-        <div>
-          <h3 className="mb-6 font-bold">
-            <span className="bg-primary text-[#e8f3f3] px-1 font-bold my-2.5 font-poppins">CM</span>Blog{" "}
-          </h3>
-          <p className="mb-2.5 text-[15px] leading-relaxed">
-            Did you come here for something in particular or just general Riker
-          </p>
-        </div>
+    <footer className="bg-[#f8fdfc] border-t border-[#e1f0ef]">
+      <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 lg:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+          
+          {/* Brand Section */}
+          <div className="space-y-6">
+            <Link href="/" className="flex items-center gap-1 group">
+              <div className="bg-primary text-white p-1 rounded shadow-sm group-hover:rotate-12 transition-transform duration-300">
+                <span className="font-bold text-lg leading-none">CM</span>
+              </div>
+              <span className="text-xl font-poppins font-extrabold text-[#1e1e1e]">Blog</span>
+            </Link>
+            <p className="text-gray-600 text-sm leading-relaxed max-w-xs">
+              Empowering voices through community-driven storytelling. Join our platform to share, learn, and connect with writers worldwide.
+            </p>
+            <div className="flex items-center gap-3">
+              <SocialLink href="#" icon="fa-facebook-f" color="hover:bg-[#1877F2]" />
+              <SocialLink href="#" icon="fa-x-twitter" color="hover:bg-[#000000]" />
+              <SocialLink href="#" icon="fa-instagram" color="hover:bg-[#E4405F]" />
+              <SocialLink href="#" icon="fa-linkedin-in" color="hover:bg-[#0A66C2]" />
+            </div>
+          </div>
 
-        <div>
-          <h3 className="mb-6 font-bold">Blog</h3>
-          <p className="mb-2.5 text-[15px] leading-relaxed">Travel</p>
-          <p className="mb-2.5 text-[15px] leading-relaxed">Health</p>
-          <p className="mb-2.5 text-[15px] leading-relaxed">Design</p>
-          <p className="mb-2.5 text-[15px] leading-relaxed">Education</p>
-          <p className="mb-2.5 text-[15px] leading-relaxed">Technology</p>
-        </div>
-
-        <div>
-          <h3 className="mb-6 font-bold">Quick Links</h3>
-          <p className="mb-2.5 text-[15px] leading-relaxed">FAQ</p>
-          <p className="mb-2.5 text-[15px] leading-relaxed">Terms and Conditions</p>
-          <p className="mb-2.5 text-[15px] leading-relaxed">Support</p>
-          <p className="mb-2.5 text-[15px] leading-relaxed">Privacy and Policy</p>
-        </div>
-
-        <section className="flex flex-col gap-6">
+          {/* Categories Section */}
           <div>
-            <h3 className="mb-6 font-bold">Subscriber for Newsletter</h3>
-            <div className="flex">
+            <h3 className="text-[#1e1e1e] font-bold mb-6 text-lg">Explore Categories</h3>
+            <ul className="space-y-1">
+              <FooterLink href="/category/travel" icon="fa-plane">Travel & Adventure</FooterLink>
+              <FooterLink href="/category/health" icon="fa-heart-pulse">Health & Wellness</FooterLink>
+              <FooterLink href="/category/design" icon="fa-palette">Design & Creativity</FooterLink>
+              <FooterLink href="/category/education" icon="fa-graduation-cap">Learning & Education</FooterLink>
+              <FooterLink href="/category/technology" icon="fa-microchip">Tech & Innovation</FooterLink>
+            </ul>
+          </div>
+
+          {/* Quick Links Section */}
+          <div>
+            <h3 className="text-[#1e1e1e] font-bold mb-6 text-lg">Quick Links</h3>
+            <ul className="space-y-1">
+              <FooterLink href="/faq">Help & FAQ</FooterLink>
+              <FooterLink href="/terms">Terms & Conditions</FooterLink>
+              <FooterLink href="/support">Technical Support</FooterLink>
+              <FooterLink href="/privacy">Privacy Policy</FooterLink>
+              <FooterLink href="/about">About Our Mission</FooterLink>
+            </ul>
+          </div>
+
+          {/* Newsletter Section */}
+          <div className="space-y-6">
+            <h3 className="text-[#1e1e1e] font-bold text-lg">Stay in the Loop</h3>
+            <p className="text-gray-600 text-sm">
+              Get the latest stories and community updates delivered straight to your inbox.
+            </p>
+            <form className="relative group">
               <input 
-                type="text" 
-                placeholder="Your Email" 
-                className="w-full max-w-[250px] h-[45px] text-[#777777] px-5 py-3.5 bg-[#DFF1F0] rounded-l-md border-none focus:outline focus:outline-1 focus:outline-primary"
+                type="email" 
+                placeholder="Enter your email" 
+                className="w-full bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all"
               />
-              <button className="h-[45px] px-10 py-3.5 text-white bg-primary rounded-r-md -ml-[2px] cursor-pointer">
-                Subscribe
+              <button 
+                type="submit"
+                className="absolute right-2 top-2 bottom-2 px-6 bg-primary text-white font-bold rounded-lg text-sm hover:bg-[#008f87] transition-colors shadow-sm active:scale-95"
+              >
+                Join
               </button>
-            </div>
+            </form>
           </div>
-          <div>
-            <h3 className="mb-1 font-bold">Follow on:</h3>
-            <div className="flex flex-wrap gap-4 mt-2">
-              <button className="bg-transparent border-none cursor-pointer">
-                <i className="fa-brands fa-facebook-square p-1.5 text-xl text-[#666]"></i>
-              </button>
-              <button className="bg-transparent border-none cursor-pointer">
-                <i className="fa-brands fa-twitter p-1.5 text-xl text-[#666]"></i>
-              </button>
-              <button className="bg-transparent border-none cursor-pointer">
-                <i className="fa-brands fa-instagram p-1.5 text-xl text-[#666]"></i>
-              </button>
-              <button className="bg-transparent border-none cursor-pointer">
-                <i className="fa-brands fa-pinterest p-1.5 text-xl text-[#666]"></i>
-              </button>
-            </div>
+
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="mt-16 pt-8 border-t border-[#e1f0ef] flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-gray-500">
+            &copy; {currentYear} <span className="font-bold text-primary">CM Blog</span>. All rights reserved.
+          </p>
+          <div className="flex items-center gap-6 text-sm text-gray-400">
+            <span>Designed by <span className="text-gray-600 font-medium">CM</span></span>
+            <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+            <span>Developed by <span className="text-gray-600 font-medium">DanTheCM</span></span>
           </div>
-        </section>
-      </section>
-      <hr className="border-[#D1E7E5] w-full" />
-      <p className="text-[12px] text-center m-3.5 text-[#555]">Designed By CM & Developed By DanTheCM</p>
+        </div>
+      </div>
     </footer>
   );
 };
 
 export default Footer;
+

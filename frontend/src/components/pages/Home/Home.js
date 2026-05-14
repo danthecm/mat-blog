@@ -36,10 +36,10 @@ const Home = (props) => {
   return (
     <>
       <Header />
-      <main className="grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] px-[1rem] py-[1.5rem] lg:px-[5rem] lg:py-[2rem] gap-x-[3rem]">
+      <main className="grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] px-[1rem] py-[1.5rem] lg:px-[5rem] lg:py-[2rem] gap-x-[3rem] gap-y-16">
         <div>
-          <h3 className="pb-[2rem] text-2xl font-bold font-poppins">
-            <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0 mr-2">Recently</span> Posted{" "}
+          <h3 className="pb-[2rem] text-2xl font-bold font-poppins flex items-center gap-2">
+            <span className="bg-primary text-white px-3 py-1 rounded-lg font-bold inline-block">Recently</span> Posted
           </h3>
           <section className="grid grid-cols-1 md:grid-cols-2 gap-[3rem]">
             <RecentPostCard blogs={filteredRecent} loading={loading} />
@@ -47,7 +47,7 @@ const Home = (props) => {
           
           {/* Pagination Controls */}
           {!loading && recentRes && !Array.isArray(recentRes) && (recentRes.next || recentRes.previous) && (
-            <div className="flex justify-between items-center mt-8">
+            <div className="flex justify-between items-center mt-8 mb-12 md:mb-0">
               <button 
                 onClick={() => setPage(p => Math.max(1, p - 1))} 
                 disabled={!recentRes.previous}
@@ -71,8 +71,8 @@ const Home = (props) => {
           {/* Top Authors section disabled */}
 
 
-          <h3 className="mb-[40px] text-2xl font-bold font-poppins">
-            <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0">Categories</span>
+          <h3 className="mb-[30px] text-2xl font-bold font-poppins">
+            <span className="bg-primary text-white px-3 py-1 rounded-lg font-bold inline-block">Categories</span>
           </h3>
           <div className="mb-[60px]">
             {(categories.length === 0 && !catLoading) && (
@@ -99,15 +99,15 @@ const Home = (props) => {
 
           {isAdmin && (
             <>
-              <h3 className="mb-[40px] text-2xl font-bold font-poppins">
-                <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0 mr-2">Today's</span> Update
+              <h3 className="mb-[30px] text-2xl font-bold font-poppins flex items-center gap-2">
+                <span className="bg-primary text-white px-3 py-1 rounded-lg font-bold inline-block">Today's</span> Update
               </h3>
               <TodayUpdate />
             </>
           )}
 
-          <h3 className="mb-[40px] text-2xl font-bold font-poppins">
-            <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0 mr-2 hover:text-white">Search</span> With Tags
+          <h3 className="mb-[30px] text-2xl font-bold font-poppins flex items-center gap-2">
+            <span className="bg-primary text-white px-3 py-1 rounded-lg font-bold inline-block hover:bg-[#008f87] transition-colors cursor-default">Search</span> With Tags
           </h3>
           <div className="flex flex-wrap">
             {tags.slice(0, 15).map((tag) => (

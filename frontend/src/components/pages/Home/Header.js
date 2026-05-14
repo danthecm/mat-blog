@@ -30,8 +30,8 @@ const Header = () => {
   return (
     <section className="grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-y-8 lg:gap-x-[5rem] bg-[#f2f8f7] px-[1.5rem] py-[2rem] lg:px-[7rem] lg:py-[4rem]">
       <div className="featured">
-        <h3 className="mb-[2rem] font-bold text-[clamp(1.1rem,2.5vw+0.5rem,2.2rem)] font-poppins">
-          <span className="bg-[#00aaa1] text-[#e8f3f3] px-[2px] font-bold my-[10px] mx-0 mr-2">Featured</span> This Month
+        <h3 className="mb-[2rem] font-bold text-[clamp(1.1rem,2.5vw+0.5rem,2.2rem)] font-poppins flex items-center gap-2">
+          <span className="bg-primary text-white px-3 py-1 rounded-lg font-bold inline-block">Featured</span> This Month
         </h3>
         {!fetching ? (
           <div className="max-h-[650px] overflow-y-scroll lg:pr-[6rem] scrollbar-thin">

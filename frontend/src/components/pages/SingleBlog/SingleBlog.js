@@ -58,7 +58,7 @@ const SingleBlog = ({ isPreview = false, ...props }) => {
   if (!activeBlog) return notFound();
 
   return (
-    <section className="relative grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-x-12 px-4 py-8 md:px-10 lg:px-16 lg:py-16 bg-main-bg overflow-x-hidden">
+    <section className="relative grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-x-12 gap-y-12 px-4 py-8 md:px-10 lg:px-16 lg:py-16 bg-main-bg overflow-x-hidden">
       {isPreview && (
         <>
           {/* Watermark Overlay */}
