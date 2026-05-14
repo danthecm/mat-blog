@@ -14,14 +14,15 @@ const NavBar = (props) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Close menu when route changes
+  // Close menu and search when route changes
   useEffect(() => {
     setMenuOpen(false);
+    setShowSearch(false);
   }, [pathname]);
 
-  // Handle scroll lock for body when menu is open
+  // Handle scroll lock for body when menu or search is open
   useEffect(() => {
-    if (menuOpen) {
+    if (menuOpen || showSearch) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -29,7 +30,7 @@ const NavBar = (props) => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [menuOpen]);
+  }, [menuOpen, showSearch]);
 
   // Handle scroll for navbar shadow/blur
   useEffect(() => {
@@ -70,30 +71,35 @@ const NavBar = (props) => {
 
   return (
     <>
+      {/* Search Overlay - Moved outside nav to prevent clipping by sticky/blurred container */}
+      {showSearch && (
+        <div className="fixed inset-0 bg-white/98 backdrop-blur-md z-[300] flex items-center px-4 md:px-20 animate-in fade-in zoom-in duration-300">
+          <form onSubmit={handleSearch} className="max-w-4xl mx-auto w-full flex items-center gap-4">
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search stories, topics, authors..." 
+              className="flex-1 bg-transparent border-b-2 border-primary/30 text-2xl md:text-4xl font-bold focus:outline-none focus:border-primary placeholder-gray-300 py-4"
+              autoFocus
+            />
+            <button type="submit" className="text-primary text-3xl hover:scale-110 transition-transform p-2">
+              <i className="fa-solid fa-magnifying-glass"></i>
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setShowSearch(false)} 
+              className="text-gray-500 text-4xl hover:text-red-500 transition-colors p-2 flex items-center justify-center"
+              aria-label="Close search"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          </form>
+        </div>
+      )}
+
       <nav className={`sticky top-0 w-full z-[100] transition-all duration-300 ${isScrolled ? 'bg-main-bg/90 backdrop-blur-md shadow-sm py-2' : 'bg-main-bg py-4'}`}>
         <div className="max-w-7xl mx-auto px-4 md:px-6 flex justify-between items-center">
-          
-          {/* Search Overlay */}
-          {showSearch && (
-            <div className="fixed inset-0 bg-white/95 backdrop-blur-sm z-[210] flex items-center px-4 md:px-20 animate-in fade-in zoom-in duration-300">
-              <form onSubmit={handleSearch} className="max-w-4xl mx-auto w-full flex items-center gap-4">
-                <input 
-                  type="text" 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search stories, topics, authors..." 
-                  className="flex-1 bg-transparent border-b-2 border-primary/30 text-2xl md:text-4xl font-bold focus:outline-none focus:border-primary placeholder-gray-300 py-4"
-                  autoFocus
-                />
-                <button type="submit" className="text-primary text-3xl hover:scale-110 transition-transform p-2">
-                  <i className="fa-solid fa-magnifying-glass"></i>
-                </button>
-                <button type="button" onClick={() => setShowSearch(false)} className="text-gray-400 text-3xl hover:text-red-500 transition-colors p-2">
-                  <i className="fa-solid fa-xmark"></i>
-                </button>
-              </form>
-            </div>
-          )}
 
           {/* ── Left Section (Desktop) ── */}
           <div className="hidden lg:flex items-center gap-1">
